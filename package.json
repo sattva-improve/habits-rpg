@@ -1,0 +1,28 @@
+{
+  "name": "habits-rpg",
+  "version": "1.0.0",
+  "description": "習慣管理システム（RPG要素付き）",
+  "type": "module",
+  "scripts": {
+    "dev": "npx ampx sandbox",
+    "build": "tsc",
+    "deploy": "npx ampx pipeline-deploy"
+  },
+  "dependencies": {
+    "aws-amplify": "^6.0.0",
+    "ulid": "^2.3.0"
+  },
+  "devDependencies": {
+    "@aws-amplify/backend": "^1.0.0",
+    "@aws-amplify/backend-cli": "^1.0.0",
+    "@aws-amplify/backend-function": "^1.0.0",
+    "@aws-amplify/backend-storage": "^1.0.0",
+    "@aws-amplify/backend-auth": "^1.0.0",
+    "@aws-amplify/backend-data": "^1.0.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "aws-cdk-lib": "^2.0.0",
+    "constructs": "^10.0.0",
+    "esbuild": "^0.20.0"
+  }
+}

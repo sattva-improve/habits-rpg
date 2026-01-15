@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+frontend/build/
+
+# Amplify
+.amplify/
+amplify_outputs.json
+amplifyconfiguration.json
+amplify/.temp/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# AWS credentials
+.aws/
+*.pem
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# Test
+coverage/
+
+# Temporary files
+*.tmp
+*.temp

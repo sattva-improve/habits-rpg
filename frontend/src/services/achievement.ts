@@ -1,0 +1,227 @@
+/**
+ * アチーブメントチェックサービス
+ * 習慣完了時などにアチーブメント達成をチェック
+ */
+
+import { client } from './graphql';
+import type { User, Achievement, UserAchievement, Habit } from '../types';
+
+// ステータスタイプからユーザーフィールドへのマッピング
+const STAT_TYPE_TO_FIELD: Record<string, keyof User> = {
+  VIT: 'vitality',
+  INT: 'intelligence',
+  MND: 'mental',
+  DEX: 'dexterity',
+  CHA: 'charisma',
+  STR: 'strength',
+};
+
+interface AchievementCheckResult {
+  newlyUnlocked: Achievement[];
+  totalExpBonus: number;
+}
+
+export const achievementService = {
+  /**
+   * ユーザーのアチーブメント達成状況をチェック
+   */
+  async checkAchievements(
+    user: User,
+    habits: Habit[],
+    achievements: Achievement[],
+    userAchievements: UserAchievement[]
+  ): Promise<AchievementCheckResult> {
+    const newlyUnlocked: Achievement[] = [];
+    let totalExpBonus = 0;
+
+    // 未解除のアチーブメントのみチェック
+    const unlockedIds = new Set(
+      userAchievements.filter(ua => ua.isUnlocked).map(ua => ua.achievementId)
+    );
+
+    for (const achievement of achievements) {
+      // 既に解除済みならスキップ
+      if (unlockedIds.has(achievement.achievementId)) {
+        continue;
+      }
+
+      // 達成条件をチェック
+      const isAchieved = this.checkAchievementCondition(achievement, user, habits);
+
+      if (isAchieved) {
+        // アチーブメント解除
+        const unlocked = await this.unlockAchievement(user.userId, achievement);
+        if (unlocked) {
+          newlyUnlocked.push(achievement);
+          totalExpBonus += achievement.expReward;
+        }
+      }
+    }
+
+    // 経験値ボーナスをユーザーに付与
+    if (totalExpBonus > 0) {
+      await this.addExpBonus(user.userId, user.totalExp, totalExpBonus);
+    }
+
+    return { newlyUnlocked, totalExpBonus };
+  },
+
+  /**
+   * アチーブメント達成条件をチェック
+   */
+  checkAchievementCondition(
+    achievement: Achievement,
+    user: User,
+    habits: Habit[]
+  ): boolean {
+    const targetValue = achievement.targetValue;
+
+    switch (achievement.type) {
+      case 'first': {
+        // 最初の習慣作成/完了
+        if (achievement.achievementId === 'first_habit') {
+          return habits.length >= 1;
+        }
+        if (achievement.achievementId === 'first_completion') {
+          const totalCompletions = habits.reduce((sum, h) => sum + (h.totalCompletions ?? 0), 0);
+          return totalCompletions >= 1;
+        }
+        return false;
+      }
+
+      case 'streak': {
+        // 連続記録
+        return (user.maxStreak ?? 0) >= targetValue;
+      }
+
+      case 'total': {
+        // 合計達成回数
+        const totalCompletions = habits.reduce((sum, h) => sum + (h.totalCompletions ?? 0), 0);
+        return totalCompletions >= targetValue;
+      }
+
+      case 'level': {
+        // レベル達成
+        return (user.level ?? 1) >= targetValue;
+      }
+
+      case 'stat': {
+        // ステータス達成
+        if (!achievement.targetStatType) return false;
+        const statField = STAT_TYPE_TO_FIELD[achievement.targetStatType];
+        if (!statField) return false;
+        const statValue = (user[statField] as number) ?? 1;
+        return statValue >= targetValue;
+      }
+
+      default:
+        return false;
+    }
+  },
+
+  /**
+   * アチーブメントを解除
+   */
+  async unlockAchievement(
+    userId: string,
+    achievement: Achievement
+  ): Promise<boolean> {
+    try {
+      // 既存のUserAchievementを確認
+      const { data: existing } = await client.models.UserAchievement.list({
+        filter: {
+          userId: { eq: userId },
+          achievementId: { eq: achievement.achievementId },
+        },
+      });
+
+      if (existing && existing.length > 0) {
+        // 既存レコードを更新
+        const userAch = existing[0];
+        const { errors } = await client.models.UserAchievement.update({
+          id: userAch.id,
+          isUnlocked: true,
+          unlockedAt: new Date().toISOString(),
+        });
+
+        if (errors) {
+          console.error('Failed to update user achievement:', errors);
+          return false;
+        }
+      } else {
+        // 新規作成
+        const { errors } = await client.models.UserAchievement.create({
+          id: crypto.randomUUID(),
+          userId,
+          achievementId: achievement.achievementId,
+          isUnlocked: true,
+          unlockedAt: new Date().toISOString(),
+          currentValue: achievement.targetValue,
+        });
+
+        if (errors) {
+          console.error('Failed to create user achievement:', errors);
+          return false;
+        }
+      }
+
+      console.log(`🏆 Achievement unlocked: ${achievement.name}`);
+      return true;
+    } catch (error) {
+      console.error('Error unlocking achievement:', error);
+      return false;
+    }
+  },
+
+  /**
+   * 経験値ボーナスを付与
+   */
+  async addExpBonus(
+    userId: string,
+    currentExp: number,
+    bonus: number
+  ): Promise<void> {
+    try {
+      await client.models.User.update({
+        userId,
+        totalExp: currentExp + bonus,
+      });
+      console.log(`+${bonus} EXP from achievements!`);
+    } catch (error) {
+      console.error('Failed to add exp bonus:', error);
+    }
+  },
+
+  /**
+   * 初回ログイン時にユーザーのアチーブメント進捗を初期化
+   */
+  async initializeUserAchievements(
+    userId: string,
+    achievements: Achievement[]
+  ): Promise<void> {
+    const { data: existing } = await client.models.UserAchievement.list({
+      filter: { userId: { eq: userId } },
+    });
+
+    const existingIds = new Set(existing?.map(ua => ua.achievementId) ?? []);
+
+    for (const achievement of achievements) {
+      if (!existingIds.has(achievement.achievementId)) {
+        try {
+          await client.models.UserAchievement.create({
+            id: crypto.randomUUID(),
+            userId,
+            achievementId: achievement.achievementId,
+            isUnlocked: false,
+            currentValue: 0,
+          });
+        } catch (error) {
+          // 重複エラーは無視
+          console.log(`UserAchievement for ${achievement.achievementId} may already exist`);
+        }
+      }
+    }
+  },
+};
+
+export default achievementService;

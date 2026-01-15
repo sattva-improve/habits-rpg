@@ -1,0 +1,1940 @@
+openapi: 3.0.3
+info:
+  title: Habit Tracker RPG API
+  description: |
+    習慣管理システム（RPG要素付き）のバックエンドAPI
+    
+    ## 概要
+    - ユーザー管理（Cognito連携）
+    - 習慣のCRUD操作
+    - 習慣記録（トラッキング）
+    - ゲーミフィケーション（ステータス、レベル、経験値、称号、アチーブメント）
+    - 統計・レポート
+    - リマインダー設定
+    
+    ## 🚀 Amplify Sandbox テスト方法
+    
+    現在、バックエンドは **AWS AppSync GraphQL API** で実装されています。
+    
+    ### GraphQL エンドポイント
+    ```
+    https://c44kjstsh5d7rbhlw2yy7wthcu.appsync-api.us-east-1.amazonaws.com/graphql
+    ```
+    
+    ### テストツール（推奨）
+    
+    | ツール | 使い方 |
+    |--------|--------|
+    | **GraphQL Playground** | `test/graphql-playground.html` をブラウザで開く |
+    | **curl テスト** | `./test/curl-test.sh` を実行 |
+    | **TypeScript テスト** | `npx ts-node test/api-test.ts` を実行 |
+    
+    ### API Key（マスターデータ用）
+    ```
+    da2-4gyvtrzdjjaf5ero4jeb3mrcvq
+    ```
+    
+    ### 認証
+    - **API Key** (`x-api-key`): Achievement, Job, CharacterSprite のリードアクセス
+    - **Cognito JWT** (`Authorization: Bearer {token}`): ユーザーデータの全操作
+    
+    ---
+    
+    ## 認証（REST API設計）
+    Amazon Cognito JWT認証を使用
+    
+    すべてのAPI（`/auth/*` を除く）は認証が必要です。
+    リクエストヘッダーに `Authorization: Bearer {access_token}` を含めてください。
+    
+    ## ステータスシステム
+    | ステータス | 略称 | 関連カテゴリ |
+    |-----------|------|--------------|
+    | 体力 (Vitality) | VIT | 運動、睡眠、健康 |
+    | 知力 (Intelligence) | INT | 読書、勉強、学習 |
+    | 精神 (Mental) | MND | 瞑想、日記、感謝、マインドフルネス |
+    | 器用 (Dexterity) | DEX | 音楽、アート、クラフト、趣味 |
+    | 魅力 (Charisma) | CHA | コミュニケーション、社交、身だしなみ |
+    | 筋力 (Strength) | STR | 筋トレ、スポーツ、フィットネス |
+    
+    ## 経験値・レベルシステム（60日カンスト設計）
+    - 基本経験値: 15 EXP
+    - 難易度ボーナス: Easy(0.5x), Normal(1.0x), Hard(1.5x), VeryHard(2.0x)
+    - ストリークボーナス: 3日(1.1x), 7日(1.25x), 14日(1.5x), 30日(2.0x), 60日(2.5x)
+    - レベルアップ計算: 必要EXP = 15 × (1.02 ^ (level - 1))
+    - カンスト目安: 1日3習慣(Normal)で59日目にLv.99到達
+  version: 1.0.0
+  contact:
+    name: API Support
+    
+servers:
+  - url: https://api.habit-tracker-rpg.example.com/v1
+    description: Production server (REST API - 未実装)
+  - url: https://c44kjstsh5d7rbhlw2yy7wthcu.appsync-api.us-east-1.amazonaws.com
+    description: Amplify Sandbox (GraphQL API)
+    variables:
+      basePath:
+        default: graphql
+        description: GraphQL endpoint path
+
+tags:
+  - name: Auth
+    description: 認証関連
+  - name: Users
+    description: ユーザー管理
+  - name: Habits
+    description: 習慣管理
+  - name: Records
+    description: 習慣記録
+  - name: Stats
+    description: 統計・レポート
+  - name: Gamification
+    description: ゲーミフィケーション（レベル、経験値）
+  - name: Achievements
+    description: アチーブメント
+  - name: Jobs
+    description: 称号・ジョブ
+  - name: Reminders
+    description: リマインダー
+  - name: GraphQL
+    description: |
+      AWS AppSync GraphQL API（Amplify Sandboxテスト用）
+      
+      ## エンドポイント
+      `https://c44kjstsh5d7rbhlw2yy7wthcu.appsync-api.us-east-1.amazonaws.com/graphql`
+      
+      ## 認証方法
+      - **API Key** (`x-api-key`): マスターデータ（Achievement, Job, CharacterSprite）のリード
+      - **Cognito JWT** (`Authorization: Bearer {token}`): ユーザー固有のデータ操作
+      
+      ## テストツール
+      - GraphQL Playground: `test/graphql-playground.html`
+      - curl テスト: `./test/curl-test.sh`
+
+paths:
+  # ========== GraphQL API (Amplify Sandbox) ==========
+  /graphql:
+    post:
+      tags: [GraphQL]
+      summary: GraphQL API エンドポイント
+      operationId: graphqlQuery
+      description: |
+        AWS AppSync GraphQL API へのリクエスト
+        
+        **サーバー**: https://c44kjstsh5d7rbhlw2yy7wthcu.appsync-api.us-east-1.amazonaws.com/graphql
+        
+        **注意**: Swagger UIではGraphQL APIのテストが困難なため、以下を推奨します：
+        - ブラウザ: `test/graphql-playground.html` を開く
+        - ターミナル: `./test/curl-test.sh` を実行
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GraphQLRequest'
+            examples:
+              listAchievements:
+                summary: アチーブメント一覧取得
+                value:
+                  query: "query { listAchievements { items { achievementId name description type rarity expReward isHidden } } }"
+              listJobs:
+                summary: ジョブ一覧取得
+                value:
+                  query: "query { listJobs { items { jobId name description tier expBonus } } }"
+              listCharacterSprites:
+                summary: キャラクタースプライト一覧取得
+                value:
+                  query: "query { listCharacterSprites { items { spriteId name description category isDefault } } }"
+              schemaIntrospection:
+                summary: スキーマイントロスペクション
+                value:
+                  query: "{ __schema { types { name kind } } }"
+      responses:
+        '200':
+          description: GraphQL レスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraphQLResponse'
+              examples:
+                successResponse:
+                  value:
+                    data:
+                      listAchievements:
+                        items: []
+                errorResponse:
+                  value:
+                    data: null
+                    errors:
+                      - message: "Not Authorized to access listUsers on type Query"
+                        errorType: "Unauthorized"
+        '400':
+          description: GraphQL エラー
+        '401':
+          description: 認証エラー
+      security:
+        - apiKeyAuth: []
+        - bearerAuth: []
+
+  # ========== Auth ==========
+  /auth/signup:
+    post:
+      tags: [Auth]
+      summary: ユーザー登録
+      operationId: signUp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpRequest'
+            example:
+              email: "test@example.com"
+              password: "SecurePass123!"
+              display_name: "テストユーザー"
+              timezone: "Asia/Tokyo"
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                message: "ユーザー登録が完了しました"
+                user_id: "01HRQX8K4MZJP7Y9GF2D5N3B6C"
+                user:
+                  user_id: "01HRQX8K4MZJP7Y9GF2D5N3B6C"
+                  email: "test@example.com"
+                  profile:
+                    display_name: "テストユーザー"
+                    timezone: "Asia/Tokyo"
+                  stats:
+                    vitality: 1
+                    intelligence: 1
+                    mental: 1
+                    dexterity: 1
+                    charisma: 1
+                    strength: 1
+                  level: 1
+                  total_exp: 0
+                  current_job_id: "beginner"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /auth/signin:
+    post:
+      tags: [Auth]
+      summary: ログイン
+      operationId: signIn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignInRequest'
+            example:
+              email: "test@example.com"
+              password: "SecurePass123!"
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                access_token: "eyJraWQiOiJhYmNkZWYxMjM0NTY3ODkwIiwiYWxnIjoiUlMyNTYifQ..."
+                refresh_token: "eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAifQ..."
+                expires_in: 3600
+                token_type: "Bearer"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/signout:
+    post:
+      tags: [Auth]
+      summary: ログアウト
+      operationId: signOut
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: ログアウト成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: トークンリフレッシュ
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: リフレッシュ成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/password/change:
+    post:
+      tags: [Auth]
+      summary: パスワード変更
+      operationId: changePassword
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '204':
+          description: パスワード変更成功
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ========== Users ==========
+  /users/me:
+    get:
+      tags: [Users]
+      summary: 自分のプロフィール取得
+      operationId: getMyProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    
+    put:
+      tags: [Users]
+      summary: 自分のプロフィール更新
+      operationId: updateMyProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/me/stats:
+    get:
+      tags: [Users, Gamification]
+      summary: 自分のステータス取得
+      operationId: getMyStats
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ========== Habits ==========
+  /habits:
+    get:
+      tags: [Habits]
+      summary: 習慣一覧取得
+      operationId: listHabits
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            $ref: '#/components/schemas/HabitCategory'
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+            default: true
+        - name: is_archived
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  habits:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Habit'
+                  total:
+                    type: integer
+              example:
+                habits:
+                  - habit_id: "01HRQY5K4MZJP7Y9GF2D5N3B6C"
+                    user_id: "01HRQX8K4MZJP7Y9GF2D5N3B6C"
+                    name: "朝のジョギング"
+                    description: "毎朝30分のジョギングをする"
+                    icon: "🏃"
+                    color: "#4CAF50"
+                    category: "exercise"
+                    stat_type: "VIT"
+                    frequency:
+                      type: "daily"
+                    difficulty: "normal"
+                    current_streak: 7
+                    best_streak: 14
+                    total_completions: 45
+                    is_active: true
+                    is_archived: false
+                  - habit_id: "01HRQY6K4MZJP7Y9GF2D5N3B6D"
+                    user_id: "01HRQX8K4MZJP7Y9GF2D5N3B6C"
+                    name: "筋トレ"
+                    description: "週3回の筋力トレーニング"
+                    icon: "💪"
+                    color: "#FF5722"
+                    category: "workout"
+                    stat_type: "STR"
+                    frequency:
+                      type: "specific_days"
+                      specific_days: [0, 2, 4]
+                    difficulty: "hard"
+                    current_streak: 3
+                    best_streak: 8
+                    is_active: true
+                    is_archived: false
+                total: 2
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Habits]
+      summary: 習慣作成
+      operationId: createHabit
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitCreateRequest'
+            example:
+              name: "読書"
+              description: "毎日30分の読書"
+              icon: "📚"
+              color: "#2196F3"
+              category: "reading"
+              frequency:
+                type: "daily"
+              difficulty: "normal"
+              reminder_enabled: true
+              reminder_time: "21:00:00"
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+              example:
+                habit_id: "01HRQZ7K4MZJP7Y9GF2D5N3B6E"
+                user_id: "01HRQX8K4MZJP7Y9GF2D5N3B6C"
+                name: "読書"
+                description: "毎日30分の読書"
+                icon: "📚"
+                color: "#2196F3"
+                category: "reading"
+                stat_type: "INT"
+                frequency:
+                  type: "daily"
+                difficulty: "normal"
+                reminder_enabled: true
+                reminder_time: "21:00:00"
+                current_streak: 0
+                best_streak: 0
+                total_completions: 0
+                is_active: true
+                is_archived: false
+                created_at: "2026-01-08T10:00:00.000000"
+                updated_at: "2026-01-08T10:00:00.000000"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /habits/{habitId}:
+    parameters:
+      - name: habitId
+        in: path
+        required: true
+        schema:
+          type: string
+    
+    get:
+      tags: [Habits]
+      summary: 習慣詳細取得
+      operationId: getHabit
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Habits]
+      summary: 習慣更新
+      operationId: updateHabit
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitUpdateRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Habits]
+      summary: 習慣削除
+      operationId: deleteHabit
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /habits/{habitId}/archive:
+    parameters:
+      - name: habitId
+        in: path
+        required: true
+        schema:
+          type: string
+    
+    post:
+      tags: [Habits]
+      summary: 習慣をアーカイブ
+      operationId: archiveHabit
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: アーカイブ成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ========== Records ==========
+  /habits/{habitId}/records:
+    parameters:
+      - name: habitId
+        in: path
+        required: true
+        schema:
+          type: string
+
+    get:
+      tags: [Records]
+      summary: 習慣記録一覧取得
+      operationId: listHabitRecords
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  records:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HabitRecord'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags: [Records]
+      summary: 習慣達成を記録
+      operationId: createHabitRecord
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitRecordCreateRequest'
+            example:
+              completed_date: "2026-01-08"
+              completed: true
+              note: "朝から気持ちよく走れた！"
+      responses:
+        '201':
+          description: 記録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitRecordResponse'
+              examples:
+                normal:
+                  summary: 通常の記録
+                  value:
+                    record:
+                      record_id: "01HRR15K4MZJP7Y9GF2D5N3B6F"
+                      habit_id: "01HRQY5K4MZJP7Y9GF2D5N3B6C"
+                      user_id: "01HRQX8K4MZJP7Y9GF2D5N3B6C"
+                      completed_date: "2026-01-08"
+                      completed: true
+                      note: "朝から気持ちよく走れた！"
+                      exp_earned: 12
+                      streak_at_completion: 8
+                    exp_gained: 12
+                    new_streak: 8
+                    level_up: false
+                    stat_level_up: false
+                    stat_type: "VIT"
+                    new_achievements: []
+                    new_jobs: []
+                with_achievement:
+                  summary: アチーブメント解除
+                  value:
+                    record:
+                      record_id: "01HRR15K4MZJP7Y9GF2D5N3B6F"
+                      habit_id: "01HRQY5K4MZJP7Y9GF2D5N3B6C"
+                      user_id: "01HRQX8K4MZJP7Y9GF2D5N3B6C"
+                      completed_date: "2026-01-08"
+                      completed: true
+                      note: "7日連続達成！"
+                      exp_earned: 12
+                      streak_at_completion: 7
+                    exp_gained: 12
+                    new_streak: 7
+                    level_up: true
+                    new_level: 9
+                    stat_level_up: true
+                    new_stat_level: 6
+                    stat_type: "VIT"
+                    new_achievements:
+                      - achievement_id: "streak_7"
+                        name: "一週間の習慣"
+                        description: "7日連続で習慣を達成する"
+                        icon: "🔥"
+                        type: "streak"
+                        rarity: "uncommon"
+                        exp_reward: 100
+                    new_jobs: []
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /habits/{habitId}/records/{recordId}:
+    parameters:
+      - name: habitId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: recordId
+        in: path
+        required: true
+        schema:
+          type: string
+
+    put:
+      tags: [Records]
+      summary: 習慣記録更新
+      operationId: updateHabitRecord
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitRecordUpdateRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitRecord'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Records]
+      summary: 習慣記録削除
+      operationId: deleteHabitRecord
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /records/today:
+    get:
+      tags: [Records]
+      summary: 今日の記録一覧取得
+      operationId: getTodayRecords
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodayRecordsResponse'
+              example:
+                date: "2026-01-08"
+                habits:
+                  - habit:
+                      habit_id: "01HRQY5K4MZJP7Y9GF2D5N3B6C"
+                      name: "朝のジョギング"
+                      icon: "🏃"
+                      category: "exercise"
+                    record:
+                      record_id: "01HRR15K4MZJP7Y9GF2D5N3B6F"
+                      completed: true
+                      exp_earned: 12
+                    is_due_today: true
+                  - habit:
+                      habit_id: "01HRQZ7K4MZJP7Y9GF2D5N3B6E"
+                      name: "読書"
+                      icon: "📚"
+                      category: "reading"
+                    record: null
+                    is_due_today: true
+                completed_count: 1
+                total_due: 2
+                completion_rate: 0.5
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ========== Stats ==========
+  /stats/daily:
+    get:
+      tags: [Stats]
+      summary: 日次統計取得
+      operationId: getDailyStats
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /stats/weekly:
+    get:
+      tags: [Stats]
+      summary: 週次統計取得
+      operationId: getWeeklyStats
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: week_start
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeeklyStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /stats/monthly:
+    get:
+      tags: [Stats]
+      summary: 月次統計取得
+      operationId: getMonthlyStats
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ========== Achievements ==========
+  /achievements:
+    get:
+      tags: [Achievements]
+      summary: アチーブメント一覧取得
+      operationId: listAchievements
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: include_locked
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  achievements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AchievementProgress'
+                  unlocked_count:
+                    type: integer
+                  total_count:
+                    type: integer
+              example:
+                achievements:
+                  - achievement_id: "first_habit"
+                    achievement:
+                      achievement_id: "first_habit"
+                      name: "最初の習慣"
+                      description: "最初の習慣を作成する"
+                      icon: "🎉"
+                      type: "first"
+                      rarity: "common"
+                      exp_reward: 20
+                    is_unlocked: true
+                    unlocked_at: "2026-01-01T00:00:00.000000"
+                    current_value: 1
+                    target_value: 1
+                    progress_percent: 100.0
+                  - achievement_id: "streak_7"
+                    achievement:
+                      achievement_id: "streak_7"
+                      name: "一週間の習慣"
+                      description: "7日連続で習慣を達成する"
+                      icon: "🔥"
+                      type: "streak"
+                      rarity: "uncommon"
+                      exp_reward: 100
+                    is_unlocked: true
+                    unlocked_at: "2026-01-08T06:35:00.000000"
+                    current_value: 7
+                    target_value: 7
+                    progress_percent: 100.0
+                  - achievement_id: "streak_30"
+                    achievement:
+                      achievement_id: "streak_30"
+                      name: "月間マスター"
+                      description: "30日連続で習慣を達成する"
+                      icon: "🔥"
+                      type: "streak"
+                      rarity: "rare"
+                      exp_reward: 500
+                    is_unlocked: false
+                    current_value: 7
+                    target_value: 30
+                    progress_percent: 23.3
+                unlocked_count: 2
+                total_count: 3
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /achievements/{achievementId}:
+    parameters:
+      - name: achievementId
+        in: path
+        required: true
+        schema:
+          type: string
+
+    get:
+      tags: [Achievements]
+      summary: アチーブメント詳細取得
+      operationId: getAchievement
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementProgress'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ========== Jobs ==========
+  /jobs:
+    get:
+      tags: [Jobs]
+      summary: ジョブ一覧取得
+      operationId: listJobs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: include_locked
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/JobProgress'
+                  unlocked_count:
+                    type: integer
+                  total_count:
+                    type: integer
+              example:
+                jobs:
+                  - job_id: "beginner"
+                    job:
+                      job_id: "beginner"
+                      name: "ビギナー"
+                      description: "すべての冒険者の始まり"
+                      icon: "🌱"
+                      tier: "novice"
+                      requirements: {}
+                      stat_bonuses: {}
+                      exp_bonus: 1.0
+                    is_unlocked: true
+                    is_equipped: false
+                    unlocked_at: "2026-01-01T00:00:00.000000"
+                  - job_id: "warrior_apprentice"
+                    job:
+                      job_id: "warrior_apprentice"
+                      name: "見習い戦士"
+                      description: "筋力を鍛える者"
+                      icon: "⚔️"
+                      tier: "apprentice"
+                      requirements:
+                        stats:
+                          STR: 5
+                      stat_bonuses:
+                        STR: 1
+                      exp_bonus: 1.05
+                    is_unlocked: true
+                    is_equipped: true
+                    unlocked_at: "2026-01-05T10:00:00.000000"
+                    requirements_met:
+                      stat_STR: true
+                    progress_details:
+                      stats:
+                        STR:
+                          current: 6
+                          required: 5
+                unlocked_count: 2
+                total_count: 2
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /jobs/{jobId}:
+    parameters:
+      - name: jobId
+        in: path
+        required: true
+        schema:
+          type: string
+
+    get:
+      tags: [Jobs]
+      summary: ジョブ詳細取得
+      operationId: getJob
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobProgress'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /jobs/{jobId}/equip:
+    parameters:
+      - name: jobId
+        in: path
+        required: true
+        schema:
+          type: string
+
+    post:
+      tags: [Jobs]
+      summary: ジョブを装備
+      operationId: equipJob
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 装備成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ========== Reminders ==========
+  /reminders:
+    get:
+      tags: [Reminders]
+      summary: リマインダー設定一覧取得
+      operationId: listReminders
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reminders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReminderSetting'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /reminders/{habitId}:
+    parameters:
+      - name: habitId
+        in: path
+        required: true
+        schema:
+          type: string
+
+    put:
+      tags: [Reminders]
+      summary: リマインダー設定更新
+      operationId: updateReminder
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReminderUpdateRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderSetting'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Cognito JWT token (ユーザーデータへのアクセス用)
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: |
+        AppSync API Key (マスターデータへのアクセス用)
+        
+        **Sandbox API Key**: `da2-4gyvtrzdjjaf5ero4jeb3mrcvq`
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    # ===== GraphQL =====
+    GraphQLRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          description: GraphQL クエリ文字列
+          example: "query { listAchievements { items { achievementId name } } }"
+        variables:
+          type: object
+          description: GraphQL 変数（オプション）
+          additionalProperties: true
+        operationName:
+          type: string
+          description: 操作名（オプション）
+    
+    GraphQLResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          description: クエリ結果
+          additionalProperties: true
+        errors:
+          type: array
+          description: エラー配列（存在する場合）
+          items:
+            $ref: '#/components/schemas/GraphQLError'
+    
+    GraphQLError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: エラーメッセージ
+        errorType:
+          type: string
+          description: エラータイプ
+        path:
+          type: array
+          items:
+            type: string
+          description: エラーが発生したフィールドパス
+        locations:
+          type: array
+          items:
+            type: object
+            properties:
+              line:
+                type: integer
+              column:
+                type: integer
+
+    # ===== Error =====
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+    # ===== Auth =====
+    SignUpRequest:
+      type: object
+      required:
+        - email
+        - password
+        - display_name
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        timezone:
+          type: string
+          default: Asia/Tokyo
+
+    SignInRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - current_password
+        - new_password
+      properties:
+        current_password:
+          type: string
+        new_password:
+          type: string
+          minLength: 8
+
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        expires_in:
+          type: integer
+        token_type:
+          type: string
+          default: Bearer
+        user:
+          $ref: '#/components/schemas/User'
+
+    # ===== User =====
+    User:
+      type: object
+      properties:
+        user_id:
+          type: string
+        email:
+          type: string
+          format: email
+        profile:
+          $ref: '#/components/schemas/UserProfile'
+        stats:
+          $ref: '#/components/schemas/UserStats'
+        level:
+          type: integer
+          minimum: 1
+        total_exp:
+          type: integer
+          minimum: 0
+        exp_to_next_level:
+          type: integer
+        current_job:
+          $ref: '#/components/schemas/Job'
+        max_streak:
+          type: integer
+        current_streak:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UserProfile:
+      type: object
+      properties:
+        display_name:
+          type: string
+        avatar_url:
+          type: string
+        bio:
+          type: string
+        timezone:
+          type: string
+
+    UserStats:
+      type: object
+      properties:
+        vitality:
+          type: integer
+          description: 体力 (VIT)
+        vitality_exp:
+          type: integer
+        vitality_next_level_exp:
+          type: integer
+        intelligence:
+          type: integer
+          description: 知力 (INT)
+        intelligence_exp:
+          type: integer
+        intelligence_next_level_exp:
+          type: integer
+        mental:
+          type: integer
+          description: 精神力 (MND)
+        mental_exp:
+          type: integer
+        mental_next_level_exp:
+          type: integer
+        dexterity:
+          type: integer
+          description: 器用さ (DEX)
+        dexterity_exp:
+          type: integer
+        dexterity_next_level_exp:
+          type: integer
+        charisma:
+          type: integer
+          description: 魅力 (CHA)
+        charisma_exp:
+          type: integer
+        charisma_next_level_exp:
+          type: integer
+        strength:
+          type: integer
+          description: 筋力 (STR)
+        strength_exp:
+          type: integer
+        strength_next_level_exp:
+          type: integer
+
+    UserUpdateRequest:
+      type: object
+      properties:
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        avatar_url:
+          type: string
+        bio:
+          type: string
+          maxLength: 500
+        timezone:
+          type: string
+
+    # ===== Habit =====
+    HabitCategory:
+      type: string
+      enum:
+        - exercise
+        - sleep
+        - health
+        - reading
+        - study
+        - learning
+        - meditation
+        - journaling
+        - gratitude
+        - mindfulness
+        - music
+        - art
+        - craft
+        - hobby
+        - communication
+        - social
+        - grooming
+        - workout
+        - sports
+        - fitness
+        - other
+
+    FrequencyType:
+      type: string
+      enum:
+        - daily
+        - weekly
+        - specific_days
+
+    HabitFrequency:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/FrequencyType'
+        times_per_week:
+          type: integer
+          minimum: 1
+          maximum: 7
+        specific_days:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+
+    HabitDifficulty:
+      type: string
+      enum:
+        - easy
+        - normal
+        - hard
+        - very_hard
+
+    Habit:
+      type: object
+      properties:
+        habit_id:
+          type: string
+        user_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        color:
+          type: string
+        category:
+          $ref: '#/components/schemas/HabitCategory'
+        stat_type:
+          $ref: '#/components/schemas/StatType'
+        frequency:
+          $ref: '#/components/schemas/HabitFrequency'
+        difficulty:
+          $ref: '#/components/schemas/HabitDifficulty'
+        reminder_enabled:
+          type: boolean
+        reminder_time:
+          type: string
+          format: time
+        current_streak:
+          type: integer
+        best_streak:
+          type: integer
+        total_completions:
+          type: integer
+        is_active:
+          type: boolean
+        is_archived:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        last_completed_at:
+          type: string
+          format: date-time
+
+    HabitCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        icon:
+          type: string
+          default: "📝"
+        color:
+          type: string
+          default: "#4CAF50"
+        category:
+          $ref: '#/components/schemas/HabitCategory'
+        frequency:
+          $ref: '#/components/schemas/HabitFrequency'
+        difficulty:
+          $ref: '#/components/schemas/HabitDifficulty'
+        reminder_enabled:
+          type: boolean
+          default: false
+        reminder_time:
+          type: string
+          format: time
+
+    HabitUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        icon:
+          type: string
+        color:
+          type: string
+        category:
+          $ref: '#/components/schemas/HabitCategory'
+        frequency:
+          $ref: '#/components/schemas/HabitFrequency'
+        difficulty:
+          $ref: '#/components/schemas/HabitDifficulty'
+        reminder_enabled:
+          type: boolean
+        reminder_time:
+          type: string
+          format: time
+        is_active:
+          type: boolean
+        is_archived:
+          type: boolean
+
+    # ===== Record =====
+    HabitRecord:
+      type: object
+      properties:
+        record_id:
+          type: string
+        habit_id:
+          type: string
+        user_id:
+          type: string
+        completed_date:
+          type: string
+          format: date
+        completed:
+          type: boolean
+        note:
+          type: string
+        exp_earned:
+          type: integer
+        streak_at_completion:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    HabitRecordCreateRequest:
+      type: object
+      required:
+        - completed_date
+      properties:
+        completed_date:
+          type: string
+          format: date
+        completed:
+          type: boolean
+          default: true
+        note:
+          type: string
+          maxLength: 500
+
+    HabitRecordUpdateRequest:
+      type: object
+      properties:
+        completed:
+          type: boolean
+        note:
+          type: string
+          maxLength: 500
+
+    HabitRecordResponse:
+      type: object
+      properties:
+        record:
+          $ref: '#/components/schemas/HabitRecord'
+        exp_gained:
+          type: integer
+        new_streak:
+          type: integer
+        level_up:
+          type: boolean
+        new_level:
+          type: integer
+        stat_level_up:
+          type: boolean
+        new_stat_level:
+          type: integer
+        stat_type:
+          $ref: '#/components/schemas/StatType'
+        new_achievements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Achievement'
+        new_jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Job'
+
+    TodayRecordsResponse:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        habits:
+          type: array
+          items:
+            type: object
+            properties:
+              habit:
+                $ref: '#/components/schemas/Habit'
+              record:
+                $ref: '#/components/schemas/HabitRecord'
+              is_due_today:
+                type: boolean
+        completed_count:
+          type: integer
+        total_due:
+          type: integer
+        completion_rate:
+          type: number
+
+    # ===== Stats =====
+    DailyStats:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        total_habits:
+          type: integer
+        completed_habits:
+          type: integer
+        completion_rate:
+          type: number
+        total_exp_earned:
+          type: integer
+        habit_completions:
+          type: array
+          items:
+            type: object
+            properties:
+              habit_id:
+                type: string
+              habit_name:
+                type: string
+              completed:
+                type: boolean
+              exp_earned:
+                type: integer
+
+    WeeklyStats:
+      type: object
+      properties:
+        week_start:
+          type: string
+          format: date
+        week_end:
+          type: string
+          format: date
+        total_habits:
+          type: integer
+        completed_habits:
+          type: integer
+        completion_rate:
+          type: number
+        total_exp_earned:
+          type: integer
+        daily_stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyStats'
+
+    MonthlyStats:
+      type: object
+      properties:
+        year:
+          type: integer
+        month:
+          type: integer
+        total_habits:
+          type: integer
+        completed_habits:
+          type: integer
+        completion_rate:
+          type: number
+        total_exp_earned:
+          type: integer
+        weekly_stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeeklyStats'
+
+    # ===== Gamification =====
+    StatType:
+      type: string
+      enum:
+        - VIT
+        - INT
+        - MND
+        - DEX
+        - CHA
+        - STR
+
+    # ===== Achievement =====
+    AchievementType:
+      type: string
+      enum:
+        - streak
+        - total
+        - level
+        - stat
+        - special
+        - first
+
+    AchievementRarity:
+      type: string
+      enum:
+        - common
+        - uncommon
+        - rare
+        - epic
+        - legendary
+
+    Achievement:
+      type: object
+      properties:
+        achievement_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        type:
+          $ref: '#/components/schemas/AchievementType'
+        rarity:
+          $ref: '#/components/schemas/AchievementRarity'
+        exp_reward:
+          type: integer
+        is_hidden:
+          type: boolean
+
+    AchievementProgress:
+      type: object
+      properties:
+        achievement:
+          $ref: '#/components/schemas/Achievement'
+        is_unlocked:
+          type: boolean
+        unlocked_at:
+          type: string
+          format: date-time
+        current_value:
+          type: integer
+        target_value:
+          type: integer
+        progress_percent:
+          type: number
+
+    # ===== Job =====
+    JobTier:
+      type: string
+      enum:
+        - novice
+        - apprentice
+        - journeyman
+        - expert
+        - master
+        - grandmaster
+
+    Job:
+      type: object
+      properties:
+        job_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        tier:
+          $ref: '#/components/schemas/JobTier'
+        stat_bonuses:
+          type: object
+          additionalProperties:
+            type: integer
+        exp_bonus:
+          type: number
+
+    JobProgress:
+      type: object
+      properties:
+        job:
+          $ref: '#/components/schemas/Job'
+        is_unlocked:
+          type: boolean
+        is_equipped:
+          type: boolean
+        unlocked_at:
+          type: string
+          format: date-time
+        requirements_met:
+          type: object
+          additionalProperties:
+            type: boolean
+        progress_details:
+          type: object
+
+    # ===== Reminder =====
+    ReminderSetting:
+      type: object
+      properties:
+        habit_id:
+          type: string
+        habit_name:
+          type: string
+        enabled:
+          type: boolean
+        reminder_time:
+          type: string
+          format: time
+
+    ReminderUpdateRequest:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        reminder_time:
+          type: string
+          format: time

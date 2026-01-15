@@ -1,0 +1,351 @@
+/**
+ * ユーザーデータコンテキスト
+ * ログイン中のユーザーのゲームデータを管理
+ */
+
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { useAuth } from './AuthContext';
+import { userService } from '../services/user';
+import { habitService } from '../services/habit';
+import { achievementService } from '../services/achievement';
+import { seedService } from '../services/seed';
+import type { User, Habit, HabitRecord, Achievement, UserAchievement, Job, UserJob } from '../types';
+
+interface UserContextType {
+  // ユーザーデータ
+  userData: User | null;
+  habits: Habit[];
+  habitRecords: Map<string, HabitRecord[]>;
+  achievements: Achievement[];
+  userAchievements: UserAchievement[];
+  jobs: Job[];
+  userJobs: UserJob[];
+  
+  // ローディング状態
+  isLoading: boolean;
+  
+  // データ操作関数
+  refreshUserData: () => Promise<void>;
+  refreshHabits: () => Promise<void>;
+  createHabit: (habit: Partial<Habit>) => Promise<Habit | null>;
+  updateHabit: (habitId: string, updates: Partial<Habit>) => Promise<Habit | null>;
+  completeHabit: (habitId: string, date?: string, note?: string) => Promise<HabitRecord | null>;
+  getHabitRecordsForDate: (habitId: string, date: string) => HabitRecord | undefined;
+  isHabitCompletedToday: (habitId: string) => boolean;
+}
+
+const UserContext = createContext<UserContextType | undefined>(undefined);
+
+export function UserProvider({ children }: { children: ReactNode }) {
+  const { user, isAuthenticated } = useAuth();
+  
+  const [userData, setUserData] = useState<User | null>(null);
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [habitRecords, setHabitRecords] = useState<Map<string, HabitRecord[]>>(new Map());
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [userAchievements, setUserAchievements] = useState<UserAchievement[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [userJobs, setUserJobs] = useState<UserJob[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 今日の日付をYYYY-MM-DD形式で取得
+  const getTodayDate = () => {
+    const now = new Date();
+    return now.toISOString().split('T')[0];
+  };
+
+  // ユーザーデータを取得または作成
+  const refreshUserData = useCallback(async () => {
+    if (!user) {
+      setUserData(null);
+      return;
+    }
+
+    try {
+      const userId = user.userId;
+      let existingUser = await userService.getUser(userId);
+
+      // ユーザーが存在しない場合は作成
+      if (!existingUser) {
+        const email = user.signInDetails?.loginId ?? `${userId}@example.com`;
+        const displayName = email.split('@')[0];
+        
+        existingUser = await userService.createUser({
+          userId,
+          email,
+          displayName,
+        });
+      }
+
+      setUserData(existingUser);
+    } catch (error) {
+      console.error('Failed to fetch/create user data:', error);
+    }
+  }, [user]);
+
+  // 習慣データを取得
+  const refreshHabits = useCallback(async () => {
+    if (!user) {
+      setHabits([]);
+      return;
+    }
+
+    try {
+      const userId = user.userId;
+      const userHabits = await habitService.getHabits(userId);
+      setHabits(userHabits.filter(h => !h.isArchived && h.isActive));
+
+      // 各習慣の記録も取得
+      const recordsMap = new Map<string, HabitRecord[]>();
+      for (const habit of userHabits) {
+        const records = await habitService.getHabitRecords(habit.habitId);
+        recordsMap.set(habit.habitId, records);
+      }
+      setHabitRecords(recordsMap);
+    } catch (error) {
+      console.error('Failed to fetch habits:', error);
+    }
+  }, [user]);
+
+  // アチーブメントとジョブを取得
+  const refreshAchievementsAndJobs = useCallback(async () => {
+    if (!user) {
+      setAchievements([]);
+      setUserAchievements([]);
+      setJobs([]);
+      setUserJobs([]);
+      return;
+    }
+
+    try {
+      const userId = user.userId;
+      console.log('📥 Fetching achievements and jobs for user:', userId);
+      
+      // シード済みチェック（LocalStorageフラグ）
+      const seedCompleted = seedService.isSeedCompleted();
+      
+      if (!seedCompleted) {
+        // まずマスターデータの存在を素早くチェック
+        console.log('🔍 Checking master data existence...');
+        const { hasAchievements, hasJobs } = await seedService.checkMasterDataExists();
+        
+        if (!hasAchievements || !hasJobs) {
+          console.log('🌱 Seeding master data (achievements:', hasAchievements, ', jobs:', hasJobs, ')...');
+          const result = await seedService.seedAll();
+          console.log('🌱 Seed result:', result);
+        } else {
+          console.log('✅ Master data already exists, marking as seeded');
+        }
+        
+        // シード完了をマーク
+        seedService.markSeedCompleted();
+      } else {
+        console.log('⏭️ Seed already completed, skipping');
+      }
+      
+      // 並行してデータを取得
+      const [allAchievements, userAch, allJobs, userJ] = await Promise.all([
+        userService.getAchievements(),
+        userService.getUserAchievements(userId),
+        userService.getJobs(),
+        userService.getUserJobs(userId),
+      ]);
+
+      console.log('📊 Fetched data:', {
+        achievements: allAchievements.length,
+        userAchievements: userAch.length,
+        jobs: allJobs.length,
+        userJobs: userJ.length,
+      });
+
+      setAchievements(allAchievements);
+      setUserAchievements(userAch);
+      setJobs(allJobs);
+      setUserJobs(userJ);
+    } catch (error) {
+      console.error('Failed to fetch achievements/jobs:', error);
+    }
+  }, [user]);
+
+  // 初回ロード
+  useEffect(() => {
+    const loadData = async () => {
+      console.log('🚀 loadData called, isAuthenticated:', isAuthenticated, 'user:', user?.userId);
+      
+      if (isAuthenticated && user) {
+        setIsLoading(true);
+        console.log('📦 Starting to load data...');
+        try {
+          console.log('📦 Loading user data...');
+          await refreshUserData();
+          console.log('✅ User data loaded');
+          
+          console.log('📦 Loading habits...');
+          await refreshHabits();
+          console.log('✅ Habits loaded');
+          
+          console.log('📦 Loading achievements and jobs...');
+          await refreshAchievementsAndJobs();
+          console.log('✅ Achievements and jobs loaded');
+        } catch (error) {
+          console.error('❌ Failed to load initial data:', error);
+        } finally {
+          console.log('🏁 Setting isLoading to false');
+          setIsLoading(false);
+        }
+      } else {
+        console.log('👤 No user, clearing state');
+        setUserData(null);
+        setHabits([]);
+        setHabitRecords(new Map());
+        setAchievements([]);
+        setUserAchievements([]);
+        setJobs([]);
+        setUserJobs([]);
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user?.userId]);
+
+  // 習慣を作成
+  const createHabit = async (habit: Partial<Habit>): Promise<Habit | null> => {
+    if (!user) return null;
+
+    const newHabit = await habitService.createHabit({
+      ...habit,
+      userId: user.userId,
+    });
+
+    if (newHabit) {
+      setHabits(prev => [...prev, newHabit]);
+    }
+
+    return newHabit;
+  };
+
+  // 習慣を更新
+  const updateHabit = async (habitId: string, updates: Partial<Habit>): Promise<Habit | null> => {
+    const updatedHabit = await habitService.updateHabit(habitId, updates);
+
+    if (updatedHabit) {
+      setHabits(prev => prev.map(h => h.habitId === habitId ? updatedHabit : h));
+    }
+
+    return updatedHabit;
+  };
+
+  // 習慣を完了
+  const completeHabit = async (
+    habitId: string,
+    date?: string,
+    note?: string
+  ): Promise<HabitRecord | null> => {
+    if (!user) return null;
+
+    const completedDate = date ?? getTodayDate();
+    const result = await habitService.recordCompletion(
+      habitId,
+      user.userId,
+      completedDate,
+      note
+    );
+
+    if (result.record) {
+      setHabitRecords(prev => {
+        const newMap = new Map(prev);
+        const existing = newMap.get(habitId) ?? [];
+        newMap.set(habitId, [...existing, result.record!]);
+        return newMap;
+      });
+
+      // 習慣リストも更新（ストリークが変わる）
+      await refreshHabits();
+
+      // ユーザーデータを更新（経験値など）
+      await refreshUserData();
+
+      // アチーブメントチェック
+      if (userData && achievements.length > 0) {
+        const updatedHabits = await habitService.getHabits(user.userId);
+        const updatedUser = await userService.getUser(user.userId);
+        
+        if (updatedUser) {
+          const checkResult = await achievementService.checkAchievements(
+            updatedUser,
+            updatedHabits,
+            achievements,
+            userAchievements
+          );
+
+          // 新しく解除されたアチーブメントがあれば通知
+          if (checkResult.newlyUnlocked.length > 0) {
+            for (const ach of checkResult.newlyUnlocked) {
+              console.log(`🏆 きんのほこう かいほう: ${ach.name} (+${ach.expReward} EXP)`);
+            }
+            // UserAchievementsを再取得
+            const updatedUserAch = await userService.getUserAchievements(user.userId);
+            setUserAchievements(updatedUserAch);
+            // 経験値も更新されたので再取得
+            await refreshUserData();
+          }
+        }
+      }
+
+      // レベルアップ通知（オプション）
+      if (result.levelUp) {
+        console.log('🎉 Level Up!');
+      }
+
+      console.log(`✨ +${result.expGained} EXP`);
+    }
+
+    return result.record;
+  };
+
+  // 特定の日の記録を取得
+  const getHabitRecordsForDate = (habitId: string, date: string): HabitRecord | undefined => {
+    const records = habitRecords.get(habitId) ?? [];
+    return records.find(r => r.completedDate === date && r.completed);
+  };
+
+  // 今日完了済みかどうか
+  const isHabitCompletedToday = (habitId: string): boolean => {
+    const today = getTodayDate();
+    return !!getHabitRecordsForDate(habitId, today);
+  };
+
+  return (
+    <UserContext.Provider
+      value={{
+        userData,
+        habits,
+        habitRecords,
+        achievements,
+        userAchievements,
+        jobs,
+        userJobs,
+        isLoading,
+        refreshUserData,
+        refreshHabits,
+        createHabit,
+        updateHabit,
+        completeHabit,
+        getHabitRecordsForDate,
+        isHabitCompletedToday,
+      }}
+    >
+      {children}
+    </UserContext.Provider>
+  );
+}
+
+export function useUser() {
+  const context = useContext(UserContext);
+  if (context === undefined) {
+    throw new Error('useUser must be used within a UserProvider');
+  }
+  return context;
+}

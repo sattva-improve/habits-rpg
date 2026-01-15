@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Habits RPG - GraphQL Playground</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/graphiql@2.4.7/graphiql.min.css" />
+  <style>
+    body {
+      height: 100vh;
+      margin: 0;
+      width: 100%;
+      overflow: hidden;
+    }
+    #graphiql {
+      height: 100vh;
+    }
+    .header {
+      background: #1a1a2e;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 1.2em;
+    }
+    .header .api-key {
+      font-size: 0.9em;
+      color: #a0a0a0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎮 Habits RPG - GraphQL Playground</h1>
+    <span class="api-key">API Key認証モード</span>
+  </div>
+  <div id="graphiql"></div>
+  
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/graphiql@2.4.7/graphiql.min.js"></script>
+  
+  <script>
+    // Amplify sandbox設定
+    const GRAPHQL_ENDPOINT = 'https://c44kjstsh5d7rbhlw2yy7wthcu.appsync-api.us-east-1.amazonaws.com/graphql';
+    const API_KEY = 'da2-4gyvtrzdjjaf5ero4jeb3mrcvq';
+    
+    // GraphQL Fetcher
+    const fetcher = GraphiQL.createFetcher({
+      url: GRAPHQL_ENDPOINT,
+      headers: {
+        'x-api-key': API_KEY,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    // サンプルクエリ
+    const defaultQuery = `# 🎮 Habits RPG GraphQL API テスト
+# 
+# このPlaygroundでAmplify sandbox APIをテストできます。
+# API Key認証を使用しています。
+# マスターデータ (Achievement, Job, CharacterSprite) はAPI Keyでアクセス可能です。
+
+# =====================================
+# 📋 スキーマを確認
+# =====================================
+query IntrospectionQuery {
+  __schema {
+    types {
+      name
+      kind
+      description
+    }
+  }
+}
+
+# =====================================
+# 🏆 アチーブメント一覧を取得
+# =====================================
+# query ListAchievements {
+#   listAchievements {
+#     items {
+#       achievementId
+#       name
+#       description
+#       icon
+#       type
+#       rarity
+#       expReward
+#       isHidden
+#       targetValue
+#       targetStatType
+#     }
+#   }
+# }
+
+# =====================================
+# 💼 ジョブ一覧を取得
+# =====================================
+# query ListJobs {
+#   listJobs {
+#     items {
+#       jobId
+#       name
+#       description
+#       icon
+#       tier
+#       requirements
+#       statBonuses
+#       expBonus
+#     }
+#   }
+# }
+
+# =====================================
+# 🎨 キャラクタースプライト一覧を取得
+# =====================================
+# query ListCharacterSprites {
+#   listCharacterSprites {
+#     items {
+#       spriteId
+#       name
+#       description
+#       category
+#       spriteKey
+#       thumbnailKey
+#       frameCount
+#       width
+#       height
+#       unlockCondition
+#       isDefault
+#     }
+#   }
+# }
+
+# =====================================
+# 👤 ユーザー一覧 (Cognito認証が必要)
+# =====================================
+# query ListUsers {
+#   listUsers {
+#     items {
+#       userId
+#       email
+#       displayName
+#       level
+#       totalExp
+#       vitality
+#       intelligence
+#       mental
+#       dexterity
+#       charisma
+#       strength
+#     }
+#   }
+# }
+
+# =====================================
+# 📝 習慣一覧 (Cognito認証が必要)
+# =====================================
+# query ListHabits {
+#   listHabits {
+#     items {
+#       habitId
+#       userId
+#       name
+#       description
+#       category
+#       difficulty
+#       frequencyType
+#       currentStreak
+#       bestStreak
+#       totalCompletions
+#       isActive
+#     }
+#   }
+# }
+`;
+    
+    ReactDOM.createRoot(document.getElementById('graphiql')).render(
+      React.createElement(GraphiQL, {
+        fetcher: fetcher,
+        defaultQuery: defaultQuery,
+      })
+    );
+  </script>
+</body>
+</html>
