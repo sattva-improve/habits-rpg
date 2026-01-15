@@ -8,6 +8,7 @@ import { CreateHabit } from './pages/CreateHabit';
 import { Achievements } from './pages/Achievements';
 import { AuthPage } from './pages/Auth';
 import { ROUTES } from './constants';
+import { Toaster } from '@/components/ui/sonner';
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
               }
             />
           </Routes>
+          <Toaster position="top-center" richColors />
         </UserProvider>
       </AuthProvider>
     </BrowserRouter>
