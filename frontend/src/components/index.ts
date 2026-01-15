@@ -1,6 +1,6 @@
 // Feature Components
 export { Header } from './Header';
-export { Navigation } from './Navigation';
+export { Navigation, MobileBottomNavigation, MobileHeader } from './Navigation';
 export { StatsSection } from './StatsSection';
 export { QuestsSection } from './QuestsSection';
 export { StatusCard } from './StatusCard';
