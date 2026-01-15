@@ -6,6 +6,9 @@ import {
   signUp,
   confirmSignUp,
   fetchAuthSession,
+  resetPassword,
+  confirmResetPassword,
+  signInWithRedirect,
   AuthUser
 } from 'aws-amplify/auth';
 import { Hub } from 'aws-amplify/utils';
@@ -19,6 +22,11 @@ interface AuthContextType {
   confirmSignUp: (email: string, code: string) => Promise<void>;
   signOut: () => Promise<void>;
   getAccessToken: () => Promise<string | undefined>;
+  // パスワードリセット機能
+  resetPassword: (email: string) => Promise<void>;
+  confirmResetPassword: (email: string, code: string, newPassword: string) => Promise<void>;
+  // SSO機能
+  signInWithGoogle: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -95,6 +103,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  // パスワードリセットをリクエスト
+  async function handleResetPassword(email: string) {
+    await resetPassword({ username: email });
+  }
+
+  // パスワードリセットを確認
+  async function handleConfirmResetPassword(email: string, code: string, newPassword: string) {
+    await confirmResetPassword({
+      username: email,
+      confirmationCode: code,
+      newPassword,
+    });
+  }
+
+  // Google SSOでサインイン
+  async function handleSignInWithGoogle() {
+    await signInWithRedirect({ provider: 'Google' });
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -106,6 +133,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         confirmSignUp: handleConfirmSignUp,
         signOut: handleSignOut,
         getAccessToken,
+        resetPassword: handleResetPassword,
+        confirmResetPassword: handleConfirmResetPassword,
+        signInWithGoogle: handleSignInWithGoogle,
       }}
     >
       {children}

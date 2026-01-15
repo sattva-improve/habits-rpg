@@ -53,6 +53,7 @@ const schema = a.schema({
       avatarKey: a.string(), // S3のキャラクタードット絵のパス
       bio: a.string(),
       timezone: a.string().default('Asia/Tokyo'),
+      gender: a.string().default('male'), // 'male' | 'female'
       // Stats
       vitality: a.integer().default(1),
       vitalityExp: a.integer().default(0),

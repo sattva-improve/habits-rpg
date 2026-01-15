@@ -40,6 +40,8 @@ export type AchievementRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legen
 
 export type JobTier = 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'grandmaster';
 
+export type Gender = 'male' | 'female';
+
 // ===== Interfaces =====
 
 export interface User {
@@ -50,6 +52,7 @@ export interface User {
   avatarKey?: string;
   bio?: string;
   timezone: string;
+  gender?: Gender;
   // Stats
   vitality: number;
   vitalityExp: number;
