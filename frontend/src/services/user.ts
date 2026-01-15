@@ -60,6 +60,7 @@ export const userService = {
    * ユーザー情報を更新
    */
   async updateUser(userId: string, updates: Partial<User>): Promise<User | null> {
+    console.log('📝 Updating user:', userId, 'with:', updates);
     const { data, errors } = await client.models.User.update({
       userId,
       ...updates,
@@ -67,9 +68,11 @@ export const userService = {
 
     if (errors) {
       console.error('Failed to update user:', errors);
+      console.error('Error details:', JSON.stringify(errors, null, 2));
       return null;
     }
 
+    console.log('📝 Update successful:', data);
     return data as unknown as User;
   },
 
@@ -95,8 +98,10 @@ export const userService = {
   async getAchievements(): Promise<Achievement[]> {
     const { data, errors } = await client.models.Achievement.list();
 
-    if (errors) {
+    if (errors && errors.length > 0) {
       console.error('Failed to fetch achievements:', errors);
+      // エラーの詳細を確認
+      console.error('Achievement error details:', JSON.stringify(errors[0], null, 2));
       return [];
     }
 
@@ -109,8 +114,10 @@ export const userService = {
   async getJobs(): Promise<Job[]> {
     const { data, errors } = await client.models.Job.list();
 
-    if (errors) {
+    if (errors && errors.length > 0) {
       console.error('Failed to fetch jobs:', errors);
+      // エラーの詳細を確認
+      console.error('Job error details:', JSON.stringify(errors[0], null, 2));
       return [];
     }
 

@@ -529,17 +529,19 @@ export const seedService = {
             }
 
             // JSON型フィールドを適切に処理
+            // GraphQL JSON型は文字列化されたJSONを期待する場合がある
             const jobData = {
               ...job,
               requirements: job.requirements && Object.keys(job.requirements).length > 0 
-                ? job.requirements 
+                ? JSON.stringify(job.requirements)
                 : null,
               statBonuses: job.statBonuses && Object.keys(job.statBonuses).length > 0 
-                ? job.statBonuses 
+                ? JSON.stringify(job.statBonuses)
                 : null,
             };
 
-            const { errors } = await client.models.Job.create(jobData);
+            console.log(`Creating job ${job.jobId} with data:`, JSON.stringify(jobData, null, 2));
+            const { errors } = await client.models.Job.create(jobData as any);
             if (errors) {
               console.error(`Failed to create job ${job.jobId}:`, JSON.stringify(errors, null, 2));
               return { success: false };
@@ -590,6 +592,95 @@ export const seedService = {
       console.error('Error checking master data:', error);
       return { hasAchievements: false, hasJobs: false };
     }
+  },
+
+  /**
+   * 全アチーブメントを削除
+   */
+  async deleteAllAchievements(): Promise<number> {
+    let deleted = 0;
+    try {
+      // エラーがあってもdataは取得できる場合がある
+      const result = await client.models.Achievement.list({ limit: 1000 });
+      const data = result.data;
+      if (data && data.length > 0) {
+        console.log(`🗑️ Found ${data.length} achievements to delete`);
+        for (const ach of data) {
+          try {
+            if (ach.achievementId) {
+              await client.models.Achievement.delete({ achievementId: ach.achievementId });
+              deleted++;
+              console.log(`  Deleted achievement: ${ach.achievementId}`);
+            }
+          } catch (e) {
+            console.error(`Failed to delete achievement ${ach.achievementId}:`, e);
+          }
+        }
+      } else {
+        console.log('🗑️ No achievements found to delete');
+      }
+    } catch (error) {
+      console.error('Error deleting achievements:', error);
+    }
+    return deleted;
+  },
+
+  /**
+   * 全ジョブを削除
+   */
+  async deleteAllJobs(): Promise<number> {
+    let deleted = 0;
+    try {
+      // エラーがあってもdataは取得できる場合がある
+      const result = await client.models.Job.list({ limit: 1000 });
+      const data = result.data;
+      if (data && data.length > 0) {
+        console.log(`🗑️ Found ${data.length} jobs to delete`);
+        for (const job of data) {
+          try {
+            if (job.jobId) {
+              await client.models.Job.delete({ jobId: job.jobId });
+              deleted++;
+              console.log(`  Deleted job: ${job.jobId}`);
+            }
+          } catch (e) {
+            console.error(`Failed to delete job ${job.jobId}:`, e);
+          }
+        }
+      } else {
+        console.log('🗑️ No jobs found to delete');
+      }
+    } catch (error) {
+      console.error('Error deleting jobs:', error);
+    }
+    return deleted;
+  },
+
+  /**
+   * 全マスターデータを削除して再シード
+   */
+  async reseedAll(): Promise<{ deleted: { achievements: number; jobs: number }; seeded: { achievements: { success: number; failed: number }; jobs: { success: number; failed: number } } }> {
+    console.log('🗑️ Deleting all master data...');
+    const [deletedAch, deletedJobs] = await Promise.all([
+      this.deleteAllAchievements(),
+      this.deleteAllJobs(),
+    ]);
+    console.log(`🗑️ Deleted: ${deletedAch} achievements, ${deletedJobs} jobs`);
+
+    // LocalStorageフラグをリセット
+    this.resetSeedFlag();
+
+    console.log('🌱 Re-seeding all master data...');
+    const seeded = await this.seedAll();
+    console.log('🌱 Seed complete:', seeded);
+
+    // シード完了をマーク
+    this.markSeedCompleted();
+
+    return {
+      deleted: { achievements: deletedAch, jobs: deletedJobs },
+      seeded,
+    };
   },
 };
 

@@ -9,7 +9,7 @@ import { userService } from '../services/user';
 import { habitService } from '../services/habit';
 import { achievementService } from '../services/achievement';
 import { seedService } from '../services/seed';
-import type { User, Habit, HabitRecord, Achievement, UserAchievement, Job, UserJob } from '../types';
+import type { User, Habit, HabitRecord, Achievement, UserAchievement, Job, UserJob, Gender } from '../types';
 
 interface UserContextType {
   // ユーザーデータ
@@ -32,6 +32,10 @@ interface UserContextType {
   completeHabit: (habitId: string, date?: string, note?: string) => Promise<HabitRecord | null>;
   getHabitRecordsForDate: (habitId: string, date: string) => HabitRecord | undefined;
   isHabitCompletedToday: (habitId: string) => boolean;
+  // 職業選択
+  selectJob: (jobId: string) => Promise<boolean>;
+  // 性別変更
+  changeGender: (gender: Gender) => Promise<boolean>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -283,7 +287,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           // 新しく解除されたアチーブメントがあれば通知
           if (checkResult.newlyUnlocked.length > 0) {
             for (const ach of checkResult.newlyUnlocked) {
-              console.log(`🏆 きんのほこう かいほう: ${ach.name} (+${ach.expReward} EXP)`);
+              console.log(`🏆 称号 かいほう: ${ach.name} (+${ach.expReward} EXP)`);
             }
             // UserAchievementsを再取得
             const updatedUserAch = await userService.getUserAchievements(user.userId);
@@ -317,6 +321,56 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return !!getHabitRecordsForDate(habitId, today);
   };
 
+  // 職業を選択（解放済みの職業のみ選択可能）
+  const selectJob = async (jobId: string): Promise<boolean> => {
+    if (!user || !userData) return false;
+
+    // beginner（みならい）は常に選択可能
+    const isUnlocked = jobId === 'beginner' || userJobs.some(uj => uj.jobId === jobId && uj.isUnlocked);
+    if (!isUnlocked) {
+      console.log('❌ この職業はまだ解放されていません');
+      return false;
+    }
+
+    try {
+      const updatedUser = await userService.updateUser(user.userId, { currentJobId: jobId });
+      if (updatedUser) {
+        setUserData(updatedUser);
+        const job = jobs.find(j => j.jobId === jobId);
+        console.log(`⚔️ 職業を「${job?.name ?? jobId}」に変更しました！`);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to select job:', error);
+      return false;
+    }
+  };
+
+  // 性別を変更
+  const changeGender = async (gender: Gender): Promise<boolean> => {
+    if (!user || !userData) return false;
+
+    try {
+      const updatedUser = await userService.updateUser(user.userId, { gender });
+      console.log('👤 changeGender - updatedUser:', updatedUser);
+      console.log('👤 changeGender - updatedUser.gender:', updatedUser?.gender);
+      if (updatedUser) {
+        // 明示的にgenderを含む新しいオブジェクトを作成
+        const newUserData = { ...userData, ...updatedUser, gender };
+        console.log('👤 changeGender - newUserData:', newUserData);
+        setUserData(newUserData);
+        const genderLabel = gender === 'male' ? '男性' : '女性';
+        console.log(`👤 性別を「${genderLabel}」に変更しました！`);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to change gender:', error);
+      return false;
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -335,6 +389,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         completeHabit,
         getHabitRecordsForDate,
         isHabitCompletedToday,
+        selectJob,
+        changeGender,
       }}
     >
       {children}
