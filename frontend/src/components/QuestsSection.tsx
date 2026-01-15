@@ -95,26 +95,26 @@ export function QuestsSection() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Scroll className="w-6 h-6 text-amber-400" />
-          <h2 className="text-2xl font-bold text-amber-300">きょうのクエスト</h2>
+          <h2 className="text-2xl font-bold text-amber-300">きょうの習慣</h2>
         </div>
         <Link
           to="/create-quest"
           className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg border-2 border-amber-500 transition-all"
         >
           <PlusCircle className="w-4 h-4" />
-          <span className="hidden md:inline">あたらしいクエスト</span>
+          <span className="hidden md:inline">あたらしい習慣</span>
         </Link>
       </div>
       
       {displayHabits.length === 0 ? (
         <div className="text-center py-10">
-          <p className="text-amber-200/70 mb-4">まだクエストがありません</p>
+          <p className="text-amber-200/70 mb-4">まだ習慣がありません</p>
           <Link
             to="/create-quest"
             className="inline-flex items-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg border-2 border-amber-500 transition-all"
           >
             <PlusCircle className="w-5 h-5" />
-            最初のクエストを作成
+            最初の習慣を作成
           </Link>
         </div>
       ) : (

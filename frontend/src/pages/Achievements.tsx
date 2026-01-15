@@ -1,5 +1,8 @@
-import { Trophy, Crown, Lock, Check, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Trophy, Crown, Lock, Check, Loader2, Sword, User } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
+import { toast } from 'sonner';
+import type { Gender } from '@/types';
 
 export function Achievements() {
   const { 
@@ -7,8 +10,51 @@ export function Achievements() {
     userAchievements, 
     jobs, 
     userJobs, 
+    userData,
+    selectJob,
+    changeGender,
     isLoading 
   } = useUser();
+  
+  const [isSelectingJob, setIsSelectingJob] = useState<string | null>(null);
+  const [isChangingGender, setIsChangingGender] = useState(false);
+
+  // 性別変更ハンドラー
+  const handleChangeGender = async (gender: Gender) => {
+    if (userData?.gender === gender) return;
+    
+    setIsChangingGender(true);
+    const success = await changeGender(gender);
+    setIsChangingGender(false);
+    
+    if (success) {
+      const genderLabel = gender === 'male' ? '男性' : '女性';
+      toast.success(`👤 性別を「${genderLabel}」に変更しました！`, {
+        description: 'キャラクターの見た目が変わりました',
+      });
+    } else {
+      toast.error('性別の変更に失敗しました', {
+        description: 'もう一度お試しください',
+      });
+    }
+  };
+
+  // 職業選択ハンドラー
+  const handleSelectJob = async (jobId: string, jobName: string) => {
+    setIsSelectingJob(jobId);
+    const success = await selectJob(jobId);
+    setIsSelectingJob(null);
+    
+    if (success) {
+      toast.success(`⚔️ 職業を「${jobName}」に変更しました！`, {
+        description: '新しい冒険の始まりです！',
+      });
+    } else {
+      toast.error('職業の変更に失敗しました', {
+        description: 'もう一度お試しください',
+      });
+    }
+  };
 
   // ユーザーのアチーブメント状態をマージ
   const mergedAchievements = achievements.map(ach => {
@@ -95,7 +141,7 @@ export function Achievements() {
       description: job.description,
       unlockCondition,
       isUnlocked: userJob?.isUnlocked ?? (job.jobId === 'beginner'),
-      isEquipped: userJob?.isEquipped ?? false,
+      isEquipped: userData?.currentJobId === job.jobId,
       iconType: job.icon,
       tier: job.tier,
     };
@@ -161,7 +207,7 @@ export function Achievements() {
       <div className="bg-gradient-to-br from-amber-900/40 to-amber-800/40 border-2 border-amber-600/50 rounded-lg shadow-2xl p-6 backdrop-blur-sm">
         <div className="flex items-center gap-3 mb-6">
           <Trophy className="w-8 h-8 text-amber-400" />
-          <h1 className="text-3xl font-bold text-amber-300">きんのほこう</h1>
+          <h1 className="text-3xl font-bold text-amber-300">称号</h1>
         </div>
 
         {displayAchievements.length === 0 ? (
@@ -315,14 +361,31 @@ export function Achievements() {
                   >
                     {job.description}
                   </p>
-                  <div
-                    className={`text-xs font-semibold px-2 py-1 rounded border inline-block ${
-                      job.isUnlocked
-                        ? 'bg-purple-950/40 text-purple-400 border-purple-700/50'
-                        : 'bg-slate-800/40 text-slate-500 border-slate-700/50'
-                    }`}
-                  >
-                    {job.unlockCondition}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div
+                      className={`text-xs font-semibold px-2 py-1 rounded border inline-block ${
+                        job.isUnlocked
+                          ? 'bg-purple-950/40 text-purple-400 border-purple-700/50'
+                          : 'bg-slate-800/40 text-slate-500 border-slate-700/50'
+                      }`}
+                    >
+                      {job.unlockCondition}
+                    </div>
+                    {/* 職業選択ボタン */}
+                    {job.isUnlocked && !job.isEquipped && (
+                      <button
+                        onClick={() => handleSelectJob(job.id, job.title)}
+                        disabled={isSelectingJob !== null}
+                        className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded border bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSelectingJob === job.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Sword className="w-3 h-3" />
+                        )}
+                        <span>そうびする</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -347,6 +410,67 @@ export function Achievements() {
               {displayJobs.filter((j) => j.isUnlocked).length} / {displayJobs.length}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* キャラクター設定 - 性別選択 */}
+      <div className="bg-gradient-to-br from-cyan-900/40 to-cyan-800/40 border-2 border-cyan-600/50 rounded-lg shadow-2xl p-6 backdrop-blur-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <User className="w-8 h-8 text-cyan-400" />
+          <h2 className="text-2xl font-bold text-cyan-300">キャラクター設定</h2>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <div className="text-sm text-cyan-200 mb-3">性別</div>
+            <div className="flex gap-4">
+              <button
+                onClick={() => handleChangeGender('male')}
+                disabled={isChangingGender}
+                className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg border-2 transition-all ${
+                  userData?.gender === 'male' || (!userData?.gender && true)
+                    ? 'bg-gradient-to-br from-cyan-600 to-cyan-800 border-cyan-400 text-white shadow-lg shadow-cyan-900/30'
+                    : 'bg-slate-900/40 border-slate-700/50 text-slate-300 hover:border-cyan-600/50 hover:bg-slate-800/40'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {isChangingGender ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <span className="text-2xl">👨</span>
+                    <span className="font-semibold">男性</span>
+                    {(userData?.gender === 'male' || !userData?.gender) && (
+                      <Check className="w-5 h-5 text-cyan-200" />
+                    )}
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => handleChangeGender('female')}
+                disabled={isChangingGender}
+                className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg border-2 transition-all ${
+                  userData?.gender === 'female'
+                    ? 'bg-gradient-to-br from-cyan-600 to-cyan-800 border-cyan-400 text-white shadow-lg shadow-cyan-900/30'
+                    : 'bg-slate-900/40 border-slate-700/50 text-slate-300 hover:border-cyan-600/50 hover:bg-slate-800/40'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {isChangingGender ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <span className="text-2xl">👩</span>
+                    <span className="font-semibold">女性</span>
+                    {userData?.gender === 'female' && (
+                      <Check className="w-5 h-5 text-cyan-200" />
+                    )}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+          <p className="text-xs text-cyan-400/60">
+            ※ 性別を変更するとキャラクターのドット絵が変わります
+          </p>
         </div>
       </div>
     </div>

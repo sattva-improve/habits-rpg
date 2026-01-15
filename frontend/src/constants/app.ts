@@ -18,7 +18,7 @@ export const ROUTES = {
 // ナビゲーション項目
 export const NAV_ITEMS = [
   { label: 'ダッシュボード', path: ROUTES.DASHBOARD },
-  { label: 'クエスト作成', path: ROUTES.CREATE_QUEST },
+  { label: '習慣作成', path: ROUTES.CREATE_QUEST },
   { label: 'アチーブメント', path: ROUTES.ACHIEVEMENTS },
 ] as const;
 
