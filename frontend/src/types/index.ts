@@ -12,6 +12,7 @@ export type {
   AchievementType,
   AchievementRarity,
   JobTier,
+  Gender,
   User,
   Habit,
   HabitRecord,

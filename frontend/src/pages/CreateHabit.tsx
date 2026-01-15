@@ -5,17 +5,27 @@ import { useUser } from '@/contexts/UserContext';
 import type { HabitCategory, HabitDifficulty, FrequencyType, StatType } from '@/types';
 
 // カテゴリー設定
-const CATEGORIES: Array<{ value: HabitCategory; label: string; icon: string; statType: StatType }> = [
-  { value: 'exercise', label: 'うんどう', icon: '🏃', statType: 'VIT' },
-  { value: 'workout', label: 'きたえ', icon: '💪', statType: 'STR' },
-  { value: 'study', label: 'べんきょう', icon: '📖', statType: 'INT' },
-  { value: 'reading', label: 'どくしょ', icon: '📚', statType: 'INT' },
-  { value: 'meditation', label: 'めいそう', icon: '🧘', statType: 'MND' },
-  { value: 'health', label: 'けんこう', icon: '❤️', statType: 'VIT' },
-  { value: 'sleep', label: 'すいみん', icon: '😴', statType: 'VIT' },
-  { value: 'social', label: 'こうりゅう', icon: '👥', statType: 'CHA' },
-  { value: 'hobby', label: 'しゅみ', icon: '🎨', statType: 'DEX' },
-  { value: 'other', label: 'そのた', icon: '📝', statType: 'DEX' },
+const CATEGORIES: Array<{ value: HabitCategory; label: string; icon: string; defaultStatType: StatType }> = [
+  { value: 'exercise', label: 'うんどう', icon: '🏃', defaultStatType: 'VIT' },
+  { value: 'workout', label: '筋トレ', icon: '💪', defaultStatType: 'STR' },
+  { value: 'study', label: 'べんきょう', icon: '📖', defaultStatType: 'INT' },
+  { value: 'reading', label: 'どくしょ', icon: '📚', defaultStatType: 'INT' },
+  { value: 'meditation', label: 'めいそう', icon: '🧘', defaultStatType: 'MND' },
+  { value: 'health', label: 'けんこう', icon: '❤️', defaultStatType: 'VIT' },
+  { value: 'sleep', label: 'きゅうそく', icon: '😴', defaultStatType: 'VIT' },
+  { value: 'social', label: 'こうりゅう', icon: '👥', defaultStatType: 'CHA' },
+  { value: 'hobby', label: 'しゅみ', icon: '🎨', defaultStatType: 'DEX' },
+  { value: 'other', label: 'そのた', icon: '📝', defaultStatType: 'DEX' },
+];
+
+// ステータスタイプ設定
+const STAT_TYPES: Array<{ value: StatType; label: string; icon: string; description: string; color: string }> = [
+  { value: 'VIT', label: 'たいりょく', icon: '❤️', description: 'HP・スタミナ', color: 'text-red-400' },
+  { value: 'STR', label: 'ちから', icon: '💪', description: 'こうげき力', color: 'text-orange-400' },
+  { value: 'INT', label: 'かしこさ', icon: '📚', description: '魔法・知識', color: 'text-blue-400' },
+  { value: 'MND', label: 'せいしん', icon: '🧘', description: '集中力・意志', color: 'text-purple-400' },
+  { value: 'DEX', label: 'きようさ', icon: '🎯', description: 'スキル・技術', color: 'text-green-400' },
+  { value: 'CHA', label: 'みりょく', icon: '✨', description: '魅力・コミュ力', color: 'text-pink-400' },
 ];
 
 // アイコン選択
@@ -48,38 +58,41 @@ export function CreateHabit() {
     name: '',
     description: '',
     category: 'exercise' as HabitCategory,
+    statType: 'VIT' as StatType,
     difficulty: 'normal' as HabitDifficulty,
     frequencyType: 'daily' as FrequencyType,
-    reminderEnabled: false,
-    reminderTime: '09:00',
     icon: '📝',
     color: '#8b5cf6',
   });
+
+  // カテゴリー変更時にデフォルトのステータスタイプを設定
+  const handleCategoryChange = (category: HabitCategory) => {
+    const categoryConfig = CATEGORIES.find(c => c.value === category);
+    setFormData({
+      ...formData,
+      category,
+      statType: categoryConfig?.defaultStatType ?? 'DEX',
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name.trim()) {
-      alert('クエスト名を入力してください');
+      alert('習慣名を入力してください');
       return;
     }
 
     setIsSubmitting(true);
     
     try {
-      // カテゴリーから対応するステータスタイプを取得
-      const categoryConfig = CATEGORIES.find(c => c.value === formData.category);
-      const statType = categoryConfig?.statType ?? 'DEX';
-
       const habit = await createHabit({
         name: formData.name,
         description: formData.description || undefined,
         category: formData.category,
-        statType,
+        statType: formData.statType,
         difficulty: formData.difficulty,
         frequencyType: formData.frequencyType,
-        reminderEnabled: formData.reminderEnabled,
-        reminderTime: formData.reminderEnabled ? formData.reminderTime : undefined,
         icon: formData.icon,
         color: formData.color,
       });
@@ -88,7 +101,7 @@ export function CreateHabit() {
         await refreshHabits();
         navigate('/');
       } else {
-        alert('クエストの作成に失敗しました');
+        alert('習慣の作成に失敗しました');
       }
     } catch (error) {
       console.error('Failed to create habit:', error);
@@ -107,7 +120,7 @@ export function CreateHabit() {
       <div className="bg-gradient-to-br from-amber-900/40 to-amber-800/40 border-2 border-amber-600/50 rounded-lg shadow-2xl p-6 mb-6 relative overflow-hidden backdrop-blur-sm">
         <div className="flex items-center gap-3 mb-6">
           <Scroll className="w-8 h-8 text-amber-400" />
-          <h1 className="text-3xl font-bold text-amber-300">あたらしいクエストをつくる</h1>
+          <h1 className="text-3xl font-bold text-amber-300">あたらしい習慣をつくる</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -122,14 +135,14 @@ export function CreateHabit() {
               {/* Habit Name */}
               <div>
                 <label className="block text-sm font-bold text-amber-200 mb-2">
-                  クエストのなまえ *
+                  習慣のなまえ *
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full bg-slate-900/60 border border-amber-900/30 rounded px-4 py-2 text-amber-100 placeholder-amber-700/50 focus:outline-none focus:border-amber-600"
-                  placeholder="クエストのなまえをにゅうりょく..."
+                  placeholder="習慣のなまえをにゅうりょく..."
                   required
                 />
               </div>
@@ -144,7 +157,7 @@ export function CreateHabit() {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full bg-slate-900/60 border border-amber-900/30 rounded px-4 py-2 text-amber-100 placeholder-amber-700/50 focus:outline-none focus:border-amber-600 resize-none"
                   rows={3}
-                  placeholder="クエストのせつめい..."
+                  placeholder="習慣のせつめい..."
                 />
               </div>
 
@@ -212,7 +225,7 @@ export function CreateHabit() {
                     <button
                       key={cat.value}
                       type="button"
-                      onClick={() => setFormData({ ...formData, category: cat.value })}
+                      onClick={() => handleCategoryChange(cat.value)}
                       className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
                         formData.category === cat.value
                           ? 'border-amber-500 bg-amber-950/50'
@@ -224,6 +237,38 @@ export function CreateHabit() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Stat Type */}
+              <div>
+                <label className="block text-sm font-bold text-amber-200 mb-2">
+                  あがるパラメータ
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {STAT_TYPES.map((stat) => (
+                    <button
+                      key={stat.value}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, statType: stat.value })}
+                      className={`px-3 py-3 rounded-lg border-2 transition-all text-left ${
+                        formData.statType === stat.value
+                          ? 'border-amber-500 bg-amber-950/50'
+                          : 'border-amber-900/30 bg-slate-900/40 hover:border-amber-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{stat.icon}</span>
+                        <div>
+                          <div className={`text-sm font-bold ${stat.color}`}>{stat.label}</div>
+                          <div className="text-xs text-amber-400/60">{stat.description}</div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-amber-400/70 mt-2">
+                  ※ この習慣を達成すると、選んだパラメータがあがります
+                </p>
               </div>
 
               {/* Difficulty */}
@@ -290,37 +335,6 @@ export function CreateHabit() {
                   })}
                 </div>
               </div>
-
-              {/* Reminder */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-bold text-amber-200">
-                    リマインダー
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, reminderEnabled: !formData.reminderEnabled })}
-                    className={`relative w-12 h-6 rounded-full transition-all ${
-                      formData.reminderEnabled ? 'bg-amber-600' : 'bg-slate-700'
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                        formData.reminderEnabled ? 'translate-x-7' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-                
-                {formData.reminderEnabled && (
-                  <input
-                    type="time"
-                    value={formData.reminderTime}
-                    onChange={(e) => setFormData({ ...formData, reminderTime: e.target.value })}
-                    className="w-full bg-slate-900/60 border border-amber-900/30 rounded px-4 py-2 text-amber-100 focus:outline-none focus:border-amber-600"
-                  />
-                )}
-              </div>
             </div>
           </div>
 
@@ -339,7 +353,7 @@ export function CreateHabit() {
               ) : (
                 <>
                   <Save className="w-5 h-5" />
-                  クエストをつくる
+                  習慣をつくる
                 </>
               )}
             </button>
