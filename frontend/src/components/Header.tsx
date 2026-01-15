@@ -1,18 +1,9 @@
-import { Sword, Shield, LogOut, Loader2 } from 'lucide-react';
+import { Shield, LogOut, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
 import { Button } from '@/components/ui/button';
-import { SpriteAnimation, SPRITE_PRESETS } from '@/components/common';
+import { CharacterImage, getCharacterImagePath } from '@/components/common';
 import { LEVEL_THRESHOLDS } from '@/constants/game';
-
-// スプライト画像のパス（ジョブIDに対応）
-// PNG画像が用意できたら .svg を .png に変更する
-const SPRITE_PATHS: Record<string, string> = {
-  beginner: '/sprites/beginner-idle.png',
-  warrior: '/sprites/warrior-idle.png',
-  mage: '/sprites/mage-idle.png',
-  default: '/sprites/beginner-idle.png',
-};
 
 // レベルに必要な経験値を計算
 function getExpForLevel(level: number): number {
@@ -42,12 +33,6 @@ export function Header() {
     return job?.name ?? 'みならい';
   };
 
-  // 現在のジョブに対応するスプライトパスを取得
-  const getSpriteUrl = () => {
-    const jobId = userData?.currentJobId ?? 'beginner';
-    return SPRITE_PATHS[jobId] ?? SPRITE_PATHS.default;
-  };
-
   // レベルと経験値
   const level = userData?.level ?? 1;
   const totalExp = userData?.totalExp ?? 0;
@@ -75,39 +60,40 @@ export function Header() {
       <div className="absolute bottom-0 left-0 w-16 h-16 border-b-2 border-l-2 border-amber-500/30"></div>
       <div className="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-amber-500/30"></div>
       
-      <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
-        {/* Left: Avatar (Large) - Sprite Animation */}
+      <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+        {/* Left: Avatar (Extra Large) - Character Image */}
         <div className="flex-shrink-0">
-          <div className="w-32 h-32 bg-gradient-to-br from-amber-600 to-amber-800 rounded-lg flex items-center justify-center shadow-xl relative overflow-hidden border-4 border-amber-500/50">
+          <div className="w-48 h-48 md:w-56 md:h-56 bg-gradient-to-br from-amber-600 to-amber-800 rounded-lg flex items-center justify-center shadow-xl relative overflow-hidden border-4 border-amber-500/50">
             {/* Pixel grid effect */}
             <div className="absolute inset-0 bg-[linear-gradient(transparent_3px,rgba(0,0,0,0.1)_3px),linear-gradient(to_right,transparent_3px,rgba(0,0,0,0.1)_3px)] bg-[length:8px_8px] pointer-events-none z-20"></div>
-            {/* スプライトアニメーション */}
-            <SpriteAnimation
-              src={getSpriteUrl()}
-              {...SPRITE_PRESETS.hdIdle}
-              scale={1.25}
+            {/* キャラクター画像 */}
+            <CharacterImage
+              src={getCharacterImagePath(userData?.currentJobId, userData?.gender ?? 'male')}
+              backgroundSrc="/sprites/backgrounds/default.png"
+              width={160}
+              height={160}
               className="relative z-10"
+              alt="キャラクター"
             />
           </div>
         </div>
 
         {/* Center: User Info */}
         <div className="flex-1 text-center md:text-left">
-          <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-            <Shield className="w-5 h-5 text-amber-400" />
-            <h1 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300">
-              Habit RPG
+          {/* User Name - Large Display */}
+          <div className="mb-4">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 drop-shadow-lg">
+              {userData?.displayName ?? 'ぼうけんしゃ'}
             </h1>
-            <Sword className="w-5 h-5 text-amber-400" />
           </div>
-          <div className="flex items-center justify-center md:justify-start gap-3">
-            <span className="text-sm font-bold text-amber-300 bg-amber-950/50 px-3 py-1 rounded border border-amber-600/50">
+          <div className="flex items-center justify-center md:justify-start gap-4 flex-wrap">
+            <span className="text-lg font-bold text-amber-300 bg-amber-950/50 px-4 py-2 rounded border border-amber-600/50">
               Lv.{level}
             </span>
-            <span className="text-amber-100 font-semibold">
-              {userData?.displayName ?? 'ぼうけんしゃ'}
+            <span className="text-amber-400/80 text-lg flex items-center gap-2">
+              <Shield className="w-5 h-5 text-amber-400" />
+              {getCurrentJobName()}
             </span>
-            <span className="text-amber-400/70 text-sm">• {getCurrentJobName()}</span>
           </div>
           
           {/* EXP Progress mini bar */}
