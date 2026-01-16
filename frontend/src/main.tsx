@@ -2,7 +2,7 @@ import { createRoot } from "react-dom/client";
 import { Amplify } from "aws-amplify";
 import App from "./App";
 import "./styles/tailwind.css";
-import outputs from "../../amplify_outputs.json";
+import outputs from "../amplify_outputs.json";
 import { seedService } from "./services/seed";
 
 // Amplifyの設定

@@ -26,37 +26,9 @@ export const client = {
   },
 };
 
-// 汎用GraphQLリクエスト関数（カスタムクエリ用）
-interface GraphQLResponse<T> {
-  data?: T;
-  errors?: Array<{ message: string }>;
-}
-
-export async function graphqlRequest<T>(
-  query: string,
-  variables?: Record<string, unknown>
-): Promise<GraphQLResponse<T>> {
-  // Amplify clientのカスタムクエリ実行
-  // 基本的にはclientの型安全なメソッドを使用することを推奨
-  const response = await fetch(
-    (await import('../../../amplify_outputs.json')).default.data.url,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': (await import('../../../amplify_outputs.json')).default.data.api_key,
-      },
-      body: JSON.stringify({ query, variables }),
-    }
-  );
-
-  return response.json();
-}
-
 export const graphqlService = {
   getClient,
   client,
-  request: graphqlRequest,
 };
 
 export default graphqlService;
