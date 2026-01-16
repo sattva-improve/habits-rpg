@@ -1,9 +1,13 @@
-import { Shield, LogOut, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Shield, LogOut, Loader2, Pencil, Check, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { CharacterImage, getCharacterImagePath } from '@/components/common';
 import { LEVEL_THRESHOLDS } from '@/constants/game';
+import { userService } from '@/services';
+import { toast } from 'sonner';
 
 // レベルに必要な経験値を計算
 function getExpForLevel(level: number): number {
@@ -14,7 +18,12 @@ function getExpForLevel(level: number): number {
 
 export function Header() {
   const { signOut } = useAuth();
-  const { userData, jobs, isLoading } = useUser();
+  const { userData, jobs, isLoading, refreshUserData } = useUser();
+  
+  // 名前編集の状態
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [isSavingName, setIsSavingName] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -22,6 +31,42 @@ export function Header() {
     } catch (error) {
       console.error('サインアウトエラー:', error);
     }
+  };
+
+  // 名前編集を開始
+  const startEditingName = () => {
+    setEditedName(userData?.displayName ?? '');
+    setIsEditingName(true);
+  };
+
+  // 名前を保存
+  const saveDisplayName = async () => {
+    if (!userData || !editedName.trim()) return;
+    
+    const trimmedName = editedName.trim();
+    if (trimmedName.length < 2 || trimmedName.length > 20) {
+      toast.error('ユーザー名は2〜20文字で入力してください');
+      return;
+    }
+
+    setIsSavingName(true);
+    try {
+      await userService.updateUser(userData.userId, { displayName: trimmedName });
+      await refreshUserData();
+      toast.success('ユーザー名を変更しました！');
+      setIsEditingName(false);
+    } catch (error) {
+      console.error('名前の更新に失敗:', error);
+      toast.error('ユーザー名の変更に失敗しました');
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
+  // 名前編集をキャンセル
+  const cancelEditingName = () => {
+    setIsEditingName(false);
+    setEditedName('');
   };
 
   // 現在のジョブ名を取得
@@ -80,11 +125,47 @@ export function Header() {
 
         {/* Center: User Info */}
         <div className="flex-1 text-center md:text-left">
-          {/* User Name - Large Display */}
+          {/* User Name - Large Display with Edit */}
           <div className="mb-4">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 drop-shadow-lg">
-              {userData?.displayName ?? 'ぼうけんしゃ'}
-            </h1>
+            {isEditingName ? (
+              <div className="flex items-center gap-2 max-w-md">
+                <Input
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value)}
+                  className="text-2xl md:text-3xl font-bold bg-slate-800/80 border-amber-600 text-amber-100 h-14"
+                  maxLength={20}
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') saveDisplayName();
+                    if (e.key === 'Escape') cancelEditingName();
+                  }}
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={saveDisplayName}
+                  disabled={isSavingName}
+                  className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/30"
+                >
+                  {isSavingName ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={cancelEditingName}
+                  className="text-red-400 hover:text-red-300 hover:bg-red-900/30"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 group cursor-pointer" onClick={startEditingName}>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 drop-shadow-lg">
+                  {userData?.displayName ?? 'ぼうけんしゃ'}
+                </h1>
+                <Pencil className="w-5 h-5 text-amber-400/50 group-hover:text-amber-300 transition-colors" />
+              </div>
+            )}
           </div>
           <div className="flex items-center justify-center md:justify-start gap-4 flex-wrap">
             <span className="text-lg font-bold text-amber-300 bg-amber-950/50 px-4 py-2 rounded border border-amber-600/50">

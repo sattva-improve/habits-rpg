@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { userService } from '@/services';
 
 export function AuthPage() {
   const navigate = useNavigate();
-  const { signIn, signUp, confirmSignUp, signInWithGoogle, resetPassword, confirmResetPassword } = useAuth();
+  const { signIn, signUp, confirmSignUp, signInWithGoogle, resetPassword, confirmResetPassword, isAuthenticated, isLoading: authLoading } = useAuth();
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +38,13 @@ export function AuthPage() {
   
   // 確認コード
   const [confirmationCode, setConfirmationCode] = useState('');
+
+  // 認証済みの場合は自動的にダッシュボードへリダイレクト
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, authLoading, navigate]);
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
