@@ -341,6 +341,32 @@ export const habitService = {
       });
     }
   },
+
+  /**
+   * 習慣を削除（アーカイブ）
+   * 注: 経験値やステータスはそのまま維持される
+   */
+  async deleteHabit(habitId: string): Promise<boolean> {
+    try {
+      // 論理削除（isArchived=true）
+      const { errors } = await client.models.Habit.update({
+        habitId,
+        isArchived: true,
+        isActive: false,
+      });
+
+      if (errors) {
+        console.error('Failed to delete habit:', errors);
+        return false;
+      }
+
+      console.log(`🗑️ Habit archived: ${habitId}`);
+      return true;
+    } catch (error) {
+      console.error('Error deleting habit:', error);
+      return false;
+    }
+  },
 };
 
 export default habitService;

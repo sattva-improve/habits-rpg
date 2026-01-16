@@ -32,6 +32,7 @@ interface UserContextType {
   refreshHabits: () => Promise<void>;
   createHabit: (habit: Partial<Habit>) => Promise<Habit | null>;
   updateHabit: (habitId: string, updates: Partial<Habit>) => Promise<Habit | null>;
+  deleteHabit: (habitId: string) => Promise<boolean>;
   completeHabit: (habitId: string, date?: string, note?: string) => Promise<HabitRecord | null>;
   getHabitRecordsForDate: (habitId: string, date: string) => HabitRecord | undefined;
   isHabitCompletedToday: (habitId: string) => boolean;
@@ -252,6 +253,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return updatedHabit;
   };
 
+  // 習慣を削除
+  const deleteHabit = async (habitId: string): Promise<boolean> => {
+    const success = await habitService.deleteHabit(habitId);
+
+    if (success) {
+      setHabits(prev => prev.filter(h => h.habitId !== habitId));
+      // 記録も削除（表示から除外）
+      setHabitRecords(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(habitId);
+        return newMap;
+      });
+    }
+
+    return success;
+  };
+
   // 習慣を完了
   const completeHabit = async (
     habitId: string,
@@ -398,6 +416,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         refreshHabits,
         createHabit,
         updateHabit,
+        deleteHabit,
         completeHabit,
         getHabitRecordsForDate,
         isHabitCompletedToday,

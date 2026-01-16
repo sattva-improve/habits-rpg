@@ -300,44 +300,6 @@ export function CreateHabit() {
             </div>
           </div>
 
-          {/* Section 3: Schedule */}
-          <div className="bg-slate-900/40 border border-amber-800/30 rounded-lg p-6">
-            <h2 className="text-xl font-bold text-amber-300 mb-4">スケジュール</h2>
-            
-            <div className="space-y-4">
-              {/* Frequency Type */}
-              <div>
-                <label className="block text-sm font-bold text-amber-200 mb-2">
-                  ひんど
-                </label>
-                <div className="flex gap-4">
-                  {(['daily', 'weekly', 'specific_days'] as FrequencyType[]).map((freq) => {
-                    const freqLabels: Record<string, string> = {
-                      daily: 'まいにち',
-                      weekly: 'まいしゅう',
-                      specific_days: 'ようびしてい',
-                    };
-                    return (
-                      <label key={freq} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="frequency"
-                          value={freq}
-                          checked={formData.frequencyType === freq}
-                          onChange={(e) => setFormData({ ...formData, frequencyType: e.target.value as FrequencyType })}
-                          className="w-4 h-4 accent-amber-600"
-                        />
-                        <span className="text-sm text-amber-200">
-                          {freqLabels[freq]}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Footer Actions */}
           <div className="flex items-center gap-4 pt-4">
             <button

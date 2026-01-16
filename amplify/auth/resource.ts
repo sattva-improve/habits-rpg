@@ -26,13 +26,10 @@ export const auth = defineAuth({
         'http://localhost:5173/auth',
         'https://habit-rpg.sattva-improve.com/',
         'https://habit-rpg.sattva-improve.com/auth',
-        'https://dzsqv4peg97o1.cloudfront.net/',
-        'https://dzsqv4peg97o1.cloudfront.net/auth',
       ],
       logoutUrls: [
         'http://localhost:5173/',
         'https://habit-rpg.sattva-improve.com/',
-        'https://dzsqv4peg97o1.cloudfront.net/',
       ],
     },
   },

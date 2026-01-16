@@ -7,7 +7,7 @@ import { DIFFICULTY_CONFIG } from '@/constants/game';
 import type { Habit } from '@/types';
 
 export function QuestsSection() {
-  const { habits, isLoading, completeHabit, isHabitCompletedToday } = useUser();
+  const { habits, isLoading, completeHabit, deleteHabit, isHabitCompletedToday } = useUser();
   const [completingHabit, setCompletingHabit] = useState<string | null>(null);
 
   // 習慣を完了/未完了に切り替え
@@ -24,6 +24,11 @@ export function QuestsSection() {
       }
     }
     // 注: 一度完了した習慣の取り消しは今回は未実装
+  };
+
+  // 習慣を削除
+  const handleDelete = async (habitId: string) => {
+    await deleteHabit(habitId);
   };
 
   // 難易度からEXP報酬を計算
@@ -125,6 +130,7 @@ export function QuestsSection() {
                 key={habit.id}
                 habit={habit}
                 onToggle={() => handleToggle(habit.id)}
+                onDelete={() => handleDelete(habit.id)}
               />
             ))}
           </div>

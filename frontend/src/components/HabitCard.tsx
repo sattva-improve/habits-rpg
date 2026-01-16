@@ -1,4 +1,5 @@
-import { Check, Flame, Loader2 } from 'lucide-react';
+import { Check, Flame, Loader2, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 interface HabitDisplayData {
   id: string;
@@ -17,9 +18,13 @@ interface HabitDisplayData {
 interface HabitCardProps {
   habit: HabitDisplayData;
   onToggle: () => void;
+  onDelete?: () => Promise<void>;
 }
 
-export function HabitCard({ habit, onToggle }: HabitCardProps) {
+export function HabitCard({ habit, onToggle, onDelete }: HabitCardProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
   const statusColors = {
     'みたっせい': 'bg-red-900/40 text-red-300 border-red-700/50',
     'しんこうちゅう': 'bg-blue-900/40 text-blue-300 border-blue-700/50',
@@ -28,14 +33,53 @@ export function HabitCard({ habit, onToggle }: HabitCardProps) {
 
   const statusColor = statusColors[habit.status as keyof typeof statusColors] || 'bg-slate-900/40 text-slate-300 border-slate-700/50';
 
+  const handleDelete = async () => {
+    if (!onDelete) return;
+    setIsDeleting(true);
+    try {
+      await onDelete();
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   return (
-    <div className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all ${ 
+    <div className={`relative flex items-center gap-4 p-4 rounded-lg border-2 transition-all ${ 
       habit.completed 
         ? 'bg-green-950/30 border-green-700/50' 
         : habit.isLoading
         ? 'bg-amber-950/30 border-amber-600/50'
         : 'bg-slate-900/40 border-amber-800/30 hover:border-amber-600/60 hover:shadow-lg hover:shadow-amber-900/20'
     }`}>
+      {/* Delete Confirmation Overlay */}
+      {showDeleteConfirm && (
+        <div className="absolute inset-0 bg-slate-900/95 rounded-lg flex items-center justify-center gap-4 z-10">
+          <span className="text-amber-200 text-sm">この習慣を削除しますか？</span>
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded border border-red-500 transition-all flex items-center gap-1"
+          >
+            {isDeleting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <Trash2 className="w-4 h-4" />
+                削除
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => setShowDeleteConfirm(false)}
+            disabled={isDeleting}
+            className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-amber-200 text-sm font-bold rounded border border-slate-600 transition-all"
+          >
+            やめる
+          </button>
+        </div>
+      )}
+
       {/* Left: Checkbox */}
       <button
         onClick={onToggle}
@@ -91,6 +135,17 @@ export function HabitCard({ habit, onToggle }: HabitCardProps) {
       <div className={`flex-shrink-0 px-3 py-1 rounded border text-xs font-medium ${statusColor}`}>
         {habit.completed ? 'たっせい！' : habit.isLoading ? 'しょりちゅう...' : habit.status}
       </div>
+
+      {/* Delete Button */}
+      {onDelete && !habit.completed && !habit.isLoading && (
+        <button
+          onClick={() => setShowDeleteConfirm(true)}
+          className="flex-shrink-0 p-2 text-red-400/60 hover:text-red-400 hover:bg-red-950/30 rounded transition-all"
+          title="習慣を削除"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
     </div>
   );
 }
