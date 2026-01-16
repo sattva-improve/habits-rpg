@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUser } from '@/contexts/UserContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +18,7 @@ import { fetchUserAttributes } from 'aws-amplify/auth';
 export function ProfileSetupPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { refreshUserData } = useUser();
   
   const [displayName, setDisplayName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -70,6 +72,9 @@ export function ProfileSetupPage() {
           displayName: displayName.trim(),
         });
       }
+
+      // UserContextのデータを更新（needsProfileSetupをfalseにする）
+      await refreshUserData();
 
       // ダッシュボードへリダイレクト
       navigate('/', { replace: true });
