@@ -3,12 +3,13 @@
  * ログイン中のユーザーのゲームデータを管理
  */
 
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { userService } from '../services/user';
 import { habitService } from '../services/habit';
 import { achievementService } from '../services/achievement';
 import { seedService } from '../services/seed';
+import { toast } from 'sonner';
 import type { User, Habit, HabitRecord, Achievement, UserAchievement, Job, UserJob, Gender } from '../types';
 
 interface UserContextType {
@@ -111,11 +112,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const userHabits = await habitService.getHabits(userId);
       setHabits(userHabits.filter(h => !h.isArchived && h.isActive));
 
-      // 各習慣の記録も取得
-      const recordsMap = new Map<string, HabitRecord[]>();
-      for (const habit of userHabits) {
+      // 各習慣の記録を並列で取得（大幅な高速化）
+      const recordPromises = userHabits.map(async habit => {
         const records = await habitService.getHabitRecords(habit.habitId);
-        recordsMap.set(habit.habitId, records);
+        return { habitId: habit.habitId, records };
+      });
+      const results = await Promise.all(recordPromises);
+      const recordsMap = new Map<string, HabitRecord[]>();
+      for (const { habitId, records } of results) {
+        recordsMap.set(habitId, records);
       }
       setHabitRecords(recordsMap);
     } catch (error) {
@@ -135,28 +140,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     try {
       const userId = user.userId;
-      console.log('📥 Fetching achievements and jobs for user:', userId);
       
       // シード済みチェック（LocalStorageフラグ）
       const seedCompleted = seedService.isSeedCompleted();
       
       if (!seedCompleted) {
         // まずマスターデータの存在を素早くチェック
-        console.log('🔍 Checking master data existence...');
         const { hasAchievements, hasJobs } = await seedService.checkMasterDataExists();
         
         if (!hasAchievements || !hasJobs) {
-          console.log('🌱 Seeding master data (achievements:', hasAchievements, ', jobs:', hasJobs, ')...');
-          const result = await seedService.seedAll();
-          console.log('🌱 Seed result:', result);
-        } else {
-          console.log('✅ Master data already exists, marking as seeded');
+          await seedService.seedAll();
         }
         
         // シード完了をマーク
         seedService.markSeedCompleted();
-      } else {
-        console.log('⏭️ Seed already completed, skipping');
       }
       
       // 並行してデータを取得
@@ -167,13 +164,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         userService.getUserJobs(userId),
       ]);
 
-      console.log('📊 Fetched data:', {
-        achievements: allAchievements.length,
-        userAchievements: userAch.length,
-        jobs: allJobs.length,
-        userJobs: userJ.length,
-      });
-
       setAchievements(allAchievements);
       setUserAchievements(userAch);
       setJobs(allJobs);
@@ -183,34 +173,24 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  // 初回ロード
+  // 初回ロード（並列化で高速化）
   useEffect(() => {
     const loadData = async () => {
-      console.log('🚀 loadData called, isAuthenticated:', isAuthenticated, 'user:', user?.userId);
-      
       if (isAuthenticated && user) {
         setIsLoading(true);
-        console.log('📦 Starting to load data...');
         try {
-          console.log('📦 Loading user data...');
-          await refreshUserData();
-          console.log('✅ User data loaded');
-          
-          console.log('📦 Loading habits...');
-          await refreshHabits();
-          console.log('✅ Habits loaded');
-          
-          console.log('📦 Loading achievements and jobs...');
-          await refreshAchievementsAndJobs();
-          console.log('✅ Achievements and jobs loaded');
+          // すべてのデータを並列で取得（大幅な高速化）
+          await Promise.all([
+            refreshUserData(),
+            refreshHabits(),
+            refreshAchievementsAndJobs(),
+          ]);
         } catch (error) {
           console.error('❌ Failed to load initial data:', error);
         } finally {
-          console.log('🏁 Setting isLoading to false');
           setIsLoading(false);
         }
       } else {
-        console.log('👤 No user, clearing state');
         setUserData(null);
         setHabits([]);
         setHabitRecords(new Map());
@@ -279,6 +259,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (!user) return null;
 
     const completedDate = date ?? getTodayDate();
+    const oldLevel = userData?.level ?? 1;
+    
     const result = await habitService.recordCompletion(
       habitId,
       user.userId,
@@ -287,6 +269,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     );
 
     if (result.record) {
+      // ローカルステートを即座に更新（UIレスポンス向上）
       setHabitRecords(prev => {
         const newMap = new Map(prev);
         const existing = newMap.get(habitId) ?? [];
@@ -294,45 +277,76 @@ export function UserProvider({ children }: { children: ReactNode }) {
         return newMap;
       });
 
-      // 習慣リストも更新（ストリークが変わる）
-      await refreshHabits();
+      // 習慣のストリーク更新をローカルで即座に反映
+      setHabits(prev => prev.map(h => {
+        if (h.habitId === habitId) {
+          return {
+            ...h,
+            currentStreak: h.currentStreak + 1,
+            bestStreak: Math.max(h.bestStreak, h.currentStreak + 1),
+            totalCompletions: h.totalCompletions + 1,
+          };
+        }
+        return h;
+      }));
 
-      // ユーザーデータを更新（経験値など）
-      await refreshUserData();
-
-      // アチーブメントチェック
-      if (userData && achievements.length > 0) {
-        const updatedHabits = await habitService.getHabits(user.userId);
-        const updatedUser = await userService.getUser(user.userId);
+      // ユーザーデータと称号チェックを並列で実行（バックグラウンド更新）
+      const updatePromise = (async () => {
+        const [updatedUser, updatedHabits] = await Promise.all([
+          userService.getUser(user.userId),
+          habitService.getHabits(user.userId),
+        ]);
         
         if (updatedUser) {
-          const checkResult = await achievementService.checkAchievements(
-            updatedUser,
-            updatedHabits,
-            achievements,
-            userAchievements
-          );
+          setUserData(updatedUser);
+          setHabits(updatedHabits.filter(h => !h.isArchived && h.isActive));
+          
+          // レベルアップ通知
+          if (updatedUser.level > oldLevel) {
+            toast.success(`🎉 レベルアップ！ Lv.${updatedUser.level} になりました！`, {
+              duration: 4000,
+              style: {
+                background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+                border: '2px solid #fbbf24',
+                color: '#fbbf24',
+              },
+            });
+          }
+          
+          // アチーブメントチェック（称号獲得）
+          if (achievements.length > 0) {
+            const checkResult = await achievementService.checkAchievements(
+              updatedUser,
+              updatedHabits,
+              achievements,
+              userAchievements
+            );
 
-          // 新しく解除されたアチーブメントがあれば通知
-          if (checkResult.newlyUnlocked.length > 0) {
-            for (const ach of checkResult.newlyUnlocked) {
-              console.log(`🏆 称号 かいほう: ${ach.name} (+${ach.expReward} EXP)`);
+            // 新しく解除されたアチーブメントがあれば通知
+            if (checkResult.newlyUnlocked.length > 0) {
+              for (const ach of checkResult.newlyUnlocked) {
+                toast.success(`🏆 称号かいほう「${ach.name}」！ +${ach.expReward} EXP`, {
+                  duration: 5000,
+                  style: {
+                    background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+                    border: '2px solid #a855f7',
+                    color: '#e9d5ff',
+                  },
+                });
+              }
+              // UserAchievementsを再取得
+              const updatedUserAch = await userService.getUserAchievements(user.userId);
+              setUserAchievements(updatedUserAch);
+              // 経験値も更新されたので再取得
+              const finalUser = await userService.getUser(user.userId);
+              if (finalUser) setUserData(finalUser);
             }
-            // UserAchievementsを再取得
-            const updatedUserAch = await userService.getUserAchievements(user.userId);
-            setUserAchievements(updatedUserAch);
-            // 経験値も更新されたので再取得
-            await refreshUserData();
           }
         }
-      }
+      })();
 
-      // レベルアップ通知（オプション）
-      if (result.levelUp) {
-        console.log('🎉 Level Up!');
-      }
-
-      console.log(`✨ +${result.expGained} EXP`);
+      // バックグラウンドで更新を待つ（UIはブロックしない）
+      updatePromise.catch(err => console.error('Background update failed:', err));
     }
 
     return result.record;
