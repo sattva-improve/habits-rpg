@@ -7,6 +7,7 @@ import { Dashboard } from './pages/Dashboard';
 import { CreateHabit } from './pages/CreateHabit';
 import { Achievements } from './pages/Achievements';
 import { AuthPage } from './pages/Auth';
+import { ProfileSetupPage } from './pages/ProfileSetup';
 import { ROUTES } from './constants';
 import { Toaster } from '@/components/ui/sonner';
 
@@ -17,6 +18,14 @@ export default function App() {
         <UserProvider>
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
+            <Route
+              path="/profile-setup"
+              element={
+                <ProtectedRoute>
+                  <ProfileSetupPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="*"
               element={
