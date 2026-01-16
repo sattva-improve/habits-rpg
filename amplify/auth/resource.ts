@@ -10,29 +10,28 @@ import { defineAuth, secret } from '@aws-amplify/backend';
 export const auth = defineAuth({
   loginWith: {
     email: true,
-    // Google SSO設定 - シークレットが設定されていないため一時的に無効化
-    // 使用するには、以下のコマンドでシークレットを設定してください:
-    // npx ampx sandbox secret set GOOGLE_CLIENT_ID
-    // npx ampx sandbox secret set GOOGLE_CLIENT_SECRET
-    // externalProviders: {
-    //   google: {
-    //     clientId: secret('GOOGLE_CLIENT_ID'),
-    //     clientSecret: secret('GOOGLE_CLIENT_SECRET'),
-    //     scopes: ['email', 'profile', 'openid'],
-    //     attributeMapping: {
-    //       email: 'email',
-    //       preferredUsername: 'name',
-    //       fullname: 'name',
-    //     },
-    //   },
-    //   callbackUrls: [
-    //     'http://localhost:5173/',
-    //     'http://localhost:5173/auth',
-    //   ],
-    //   logoutUrls: [
-    //     'http://localhost:5173/',
-    //   ],
-    // },
+    externalProviders: {
+      google: {
+        clientId: secret('GOOGLE_CLIENT_ID'),
+        clientSecret: secret('GOOGLE_CLIENT_SECRET'),
+        scopes: ['email', 'profile', 'openid'],
+        attributeMapping: {
+          email: 'email',
+          preferredUsername: 'name',
+          fullname: 'name',
+        },
+      },
+      callbackUrls: [
+        'http://localhost:5173/',
+        'http://localhost:5173/auth',
+        'https://dzsqv4peg97o1.cloudfront.net/',
+        'https://dzsqv4peg97o1.cloudfront.net/auth',
+      ],
+      logoutUrls: [
+        'http://localhost:5173/',
+        'https://dzsqv4peg97o1.cloudfront.net/',
+      ],
+    },
   },
   userAttributes: {
     // カスタム属性
