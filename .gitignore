@@ -17,6 +17,9 @@ amplify/.temp/
 .env.local
 .env.*.local
 
+# Secrets documentation
+docs/SECRETS.md
+
 # AWS credentials
 .aws/
 *.pem
