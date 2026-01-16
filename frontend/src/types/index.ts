@@ -47,6 +47,3 @@ export interface QuestDisplayData {
   isCompleted: boolean;
 }
 
-// Amplify Schema型のエクスポート
-export type { Schema } from '../../../amplify/data/resource';
-

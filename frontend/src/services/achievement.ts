@@ -203,7 +203,7 @@ export const achievementService = {
       filter: { userId: { eq: userId } },
     });
 
-    const existingIds = new Set(existing?.map(ua => ua.achievementId) ?? []);
+    const existingIds = new Set(existing?.map((ua: { achievementId: string }) => ua.achievementId) ?? []);
 
     for (const achievement of achievements) {
       if (!existingIds.has(achievement.achievementId)) {

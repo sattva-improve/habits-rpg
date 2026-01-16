@@ -4,14 +4,14 @@
  */
 
 import { generateClient } from 'aws-amplify/data';
-import type { Schema } from '../../../amplify/data/resource';
 
-// 型安全なAmplifyクライアント（遅延初期化）
-let _client: ReturnType<typeof generateClient<Schema>> | null = null;
+// Amplifyクライアント（遅延初期化）
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _client: any = null;
 
 export function getClient() {
   if (!_client) {
-    _client = generateClient<Schema>();
+    _client = generateClient();
   }
   return _client;
 }

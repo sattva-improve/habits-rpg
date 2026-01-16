@@ -96,7 +96,7 @@ export const userService = {
    * 全アチーブメント一覧を取得
    */
   async getAchievements(): Promise<Achievement[]> {
-    const { data, errors } = await client.models.Achievement.list();
+    const { data, errors } = await client.models.Achievement.list({});
 
     if (errors && errors.length > 0) {
       console.error('Failed to fetch achievements:', errors);
@@ -112,7 +112,7 @@ export const userService = {
    * 全ジョブ一覧を取得
    */
   async getJobs(): Promise<Job[]> {
-    const { data, errors } = await client.models.Job.list();
+    const { data, errors } = await client.models.Job.list({});
 
     if (errors && errors.length > 0) {
       console.error('Failed to fetch jobs:', errors);
