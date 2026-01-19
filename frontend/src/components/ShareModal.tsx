@@ -44,8 +44,8 @@ export function ShareModal({ open, onOpenChange, completedCount = 0, totalHabits
     
     setIsLoadingPreview(true);
     try {
-      // 少し待ってからDOMが更新されるのを待つ
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // 画像のロードとDOM更新を待つため十分な時間を確保
+      await new Promise(resolve => setTimeout(resolve, 500));
       const dataUrl = await generatePreview(cardRef.current);
       setPreview(dataUrl);
     } catch (error) {
@@ -58,10 +58,10 @@ export function ShareModal({ open, onOpenChange, completedCount = 0, totalHabits
   // モーダルが開いた時とvariantが変わった時にプレビューを更新
   useEffect(() => {
     if (open) {
-      // DOMが描画されるのを待ってからプレビュー生成
+      // 画像のロードとDOMが描画されるのを待ってからプレビュー生成
       const timer = setTimeout(() => {
         updatePreview();
-      }, 300);
+      }, 600);
       return () => clearTimeout(timer);
     }
   }, [open, variant, updatePreview]);

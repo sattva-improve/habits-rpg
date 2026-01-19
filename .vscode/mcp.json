@@ -1,0 +1,23 @@
+{
+  "servers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${input:github-token}"
+      }
+    },
+    "sd": {
+      "command": "python3",
+      "args": ["/home/nekonisi/sd-mcp-server/simple_server.py"]
+    }
+  },
+  "inputs": [
+    {
+      "id": "github-token",
+      "type": "promptString",
+      "description": "GitHub Personal Access Token",
+      "password": true
+    }
+  ]
+}

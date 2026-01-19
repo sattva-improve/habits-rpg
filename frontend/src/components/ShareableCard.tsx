@@ -1,6 +1,6 @@
-import { forwardRef } from 'react';
+import { forwardRef, useState, useEffect } from 'react';
 import { useUser } from '@/contexts/UserContext';
-import { CharacterImage, getCharacterImagePath } from '@/components/common';
+import { getCharacterImagePath } from '@/components/common';
 import { LEVEL_THRESHOLDS } from '@/constants/game';
 
 // レベルに必要な経験値を計算
@@ -25,6 +25,8 @@ export interface ShareableCardProps {
 export const ShareableCard = forwardRef<HTMLDivElement, ShareableCardProps>(
   ({ width = 1200, height = 630, variant = 'twitter', completedCount = 0, totalHabits = 0 }, ref) => {
     const { userData, jobs } = useUser();
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [imageSrc, setImageSrc] = useState<string>('');
 
     // データ取得
     const level = userData?.level ?? 1;
@@ -62,6 +64,26 @@ export const ShareableCard = forwardRef<HTMLDivElement, ShareableCardProps>(
 
     // キャラクター画像パス
     const characterPath = getCharacterImagePath(currentJobId, gender);
+
+    // 画像をBase64に変換してhtml2canvasで確実にレンダリング
+    useEffect(() => {
+      const loadImage = async () => {
+        try {
+          const response = await fetch(characterPath);
+          const blob = await response.blob();
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setImageSrc(reader.result as string);
+            setImageLoaded(true);
+          };
+          reader.readAsDataURL(blob);
+        } catch (error) {
+          console.error('Failed to load character image:', error);
+          setImageLoaded(true); // エラーでも処理を続行
+        }
+      };
+      loadImage();
+    }, [characterPath]);
 
     // Instagram用の正方形レイアウト
     const isSquare = variant === 'instagram';
@@ -180,11 +202,32 @@ export const ShareableCard = forwardRef<HTMLDivElement, ShareableCardProps>(
                 overflow: 'hidden',
               }}
             >
-              <CharacterImage
-                src={characterPath}
-                alt="Character"
-                className="w-full h-full object-contain"
-              />
+              {imageLoaded && imageSrc ? (
+                <img
+                  src={imageSrc}
+                  alt="Character"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    imageRendering: 'pixelated',
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    background: 'rgba(217, 119, 6, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 48,
+                  }}
+                >
+                  ⚔️
+                </div>
+              )}
             </div>
 
             {/* 名前とジョブ */}

@@ -130,17 +130,44 @@ export function CharacterImage({
 
 /**
  * キャラクター画像パスのプリセット（男女別）
+ * すべてのジョブIDに対応
  */
 export const CHARACTER_IMAGE_PATHS = {
   male: {
     beginner: '/sprites/male/beginner.png',
     warrior: '/sprites/male/warrior.png',
+    warrior_apprentice: '/sprites/male/warrior_apprentice.png',
+    scholar: '/sprites/male/scholar.png',
+    scholar_apprentice: '/sprites/male/scholar_apprentice.png',
+    monk: '/sprites/male/monk.png',
+    monk_apprentice: '/sprites/male/monk_apprentice.png',
+    artisan: '/sprites/male/artisan.png',
+    artisan_apprentice: '/sprites/male/artisan_apprentice.png',
+    bard: '/sprites/male/bard.png',
+    performer_apprentice: '/sprites/male/performer_apprentice.png',
+    athlete: '/sprites/male/athlete.png',
+    athlete_apprentice: '/sprites/male/athlete_apprentice.png',
+    knight: '/sprites/male/knight.png',
+    sage: '/sprites/male/sage.png',
     mage: '/sprites/male/mage.png',
     default: '/sprites/male/beginner.png',
   },
   female: {
     beginner: '/sprites/female/beginner.png',
     warrior: '/sprites/female/warrior.png',
+    warrior_apprentice: '/sprites/female/warrior_apprentice.png',
+    scholar: '/sprites/female/scholar.png',
+    scholar_apprentice: '/sprites/female/scholar_apprentice.png',
+    monk: '/sprites/female/monk.png',
+    monk_apprentice: '/sprites/female/monk_apprentice.png',
+    artisan: '/sprites/female/artisan.png',
+    artisan_apprentice: '/sprites/female/artisan_apprentice.png',
+    bard: '/sprites/female/bard.png',
+    performer_apprentice: '/sprites/female/performer_apprentice.png',
+    athlete: '/sprites/female/athlete.png',
+    athlete_apprentice: '/sprites/female/athlete_apprentice.png',
+    knight: '/sprites/female/knight.png',
+    sage: '/sprites/female/sage.png',
     mage: '/sprites/female/mage.png',
     default: '/sprites/female/beginner.png',
   },
