@@ -4,7 +4,7 @@
  */
 
 import { client } from './graphql';
-import type { User, Achievement, UserAchievement, Habit } from '../types';
+import type { User, Achievement, UserAchievement, Habit, Job, UserJob } from '../types';
 
 // ステータスタイプからユーザーフィールドへのマッピング
 const STAT_TYPE_TO_FIELD: Record<string, keyof User> = {
@@ -19,6 +19,10 @@ const STAT_TYPE_TO_FIELD: Record<string, keyof User> = {
 interface AchievementCheckResult {
   newlyUnlocked: Achievement[];
   totalExpBonus: number;
+}
+
+interface JobCheckResult {
+  newlyUnlocked: Job[];
 }
 
 export const achievementService = {
@@ -220,6 +224,163 @@ export const achievementService = {
           console.log(`UserAchievement for ${achievement.achievementId} may already exist`);
         }
       }
+    }
+  },
+
+  /**
+   * ジョブ解放条件をチェック
+   */
+  async checkJobs(
+    user: User,
+    jobs: Job[],
+    userJobs: UserJob[],
+    userAchievements: UserAchievement[]
+  ): Promise<JobCheckResult> {
+    const newlyUnlocked: Job[] = [];
+
+    // 解放済みジョブのIDセット
+    const unlockedJobIds = new Set(
+      userJobs.filter(uj => uj.isUnlocked).map(uj => uj.jobId)
+    );
+    // beginnerは常に解放済み扱い
+    unlockedJobIds.add('beginner');
+
+    // 解放済みアチーブメントのIDセット
+    const unlockedAchievementIds = new Set(
+      userAchievements.filter(ua => ua.isUnlocked).map(ua => ua.achievementId)
+    );
+
+    // ユーザーのステータスを標準化
+    const userStats: Record<string, number> = {
+      VIT: user.vitality ?? 1,
+      INT: user.intelligence ?? 1,
+      MND: user.mental ?? 1,
+      DEX: user.dexterity ?? 1,
+      CHA: user.charisma ?? 1,
+      STR: user.strength ?? 1,
+    };
+
+    for (const job of jobs) {
+      // 既に解放済みならスキップ
+      if (unlockedJobIds.has(job.jobId)) {
+        continue;
+      }
+
+      // 解放条件をチェック
+      const requirements = job.requirements as {
+        level?: number;
+        stats?: Record<string, number>;
+        jobs?: string[];
+        achievements?: string[];
+      } | undefined;
+
+      if (!requirements) {
+        // 要件がなければ解放可能
+        const unlocked = await this.unlockJob(user.userId, job.jobId);
+        if (unlocked) {
+          newlyUnlocked.push(job);
+          unlockedJobIds.add(job.jobId);
+        }
+        continue;
+      }
+
+      let allMet = true;
+
+      // レベル要件
+      if (requirements.level && (user.level ?? 1) < requirements.level) {
+        allMet = false;
+      }
+
+      // ステータス要件
+      if (requirements.stats && allMet) {
+        for (const [stat, required] of Object.entries(requirements.stats)) {
+          if ((userStats[stat] ?? 0) < required) {
+            allMet = false;
+            break;
+          }
+        }
+      }
+
+      // 前提ジョブ要件
+      if (requirements.jobs && allMet) {
+        for (const reqJob of requirements.jobs) {
+          if (!unlockedJobIds.has(reqJob)) {
+            allMet = false;
+            break;
+          }
+        }
+      }
+
+      // アチーブメント要件
+      if (requirements.achievements && allMet) {
+        for (const reqAch of requirements.achievements) {
+          if (!unlockedAchievementIds.has(reqAch)) {
+            allMet = false;
+            break;
+          }
+        }
+      }
+
+      if (allMet) {
+        const unlocked = await this.unlockJob(user.userId, job.jobId);
+        if (unlocked) {
+          newlyUnlocked.push(job);
+          unlockedJobIds.add(job.jobId);
+        }
+      }
+    }
+
+    return { newlyUnlocked };
+  },
+
+  /**
+   * ジョブを解放
+   */
+  async unlockJob(userId: string, jobId: string): Promise<boolean> {
+    try {
+      // 既存のUserJobを確認
+      const { data: existing } = await client.models.UserJob.list({
+        filter: {
+          userId: { eq: userId },
+          jobId: { eq: jobId },
+        },
+      });
+
+      if (existing && existing.length > 0) {
+        // 既存レコードを更新
+        const userJob = existing[0];
+        const { errors } = await client.models.UserJob.update({
+          id: userJob.id,
+          isUnlocked: true,
+          unlockedAt: new Date().toISOString(),
+        });
+
+        if (errors) {
+          console.error('Failed to update user job:', errors);
+          return false;
+        }
+      } else {
+        // 新規作成
+        const { errors } = await client.models.UserJob.create({
+          id: crypto.randomUUID(),
+          userId,
+          jobId,
+          isUnlocked: true,
+          isEquipped: false,
+          unlockedAt: new Date().toISOString(),
+        });
+
+        if (errors) {
+          console.error('Failed to create user job:', errors);
+          return false;
+        }
+      }
+
+      console.log(`⚔️ Job unlocked: ${jobId}`);
+      return true;
+    } catch (error) {
+      console.error('Error unlocking job:', error);
+      return false;
     }
   },
 };

@@ -10,6 +10,7 @@ import { habitService } from '../services/habit';
 import { achievementService } from '../services/achievement';
 import { seedService } from '../services/seed';
 import { toast } from 'sonner';
+import { playSoundGlobal } from '../hooks/useSound';
 import type { User, Habit, HabitRecord, Achievement, UserAchievement, Job, UserJob, Gender } from '../types';
 
 interface UserContextType {
@@ -319,6 +320,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           
           // レベルアップ通知
           if (updatedUser.level > oldLevel) {
+            playSoundGlobal('levelUp');
             toast.success(`🎉 レベルアップ！ Lv.${updatedUser.level} になりました！`, {
               duration: 4000,
               style: {
@@ -340,6 +342,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
             // 新しく解除されたアチーブメントがあれば通知
             if (checkResult.newlyUnlocked.length > 0) {
+              playSoundGlobal('achievement');
               for (const ach of checkResult.newlyUnlocked) {
                 toast.success(`🏆 称号かいほう「${ach.name}」！ +${ach.expReward} EXP`, {
                   duration: 5000,
@@ -356,6 +359,34 @@ export function UserProvider({ children }: { children: ReactNode }) {
               // 経験値も更新されたので再取得
               const finalUser = await userService.getUser(user.userId);
               if (finalUser) setUserData(finalUser);
+            }
+          }
+
+          // ジョブ解放チェック
+          if (jobs.length > 0) {
+            const jobCheckResult = await achievementService.checkJobs(
+              updatedUser,
+              jobs,
+              userJobs,
+              userAchievements
+            );
+
+            // 新しく解放されたジョブがあれば通知
+            if (jobCheckResult.newlyUnlocked.length > 0) {
+              playSoundGlobal('jobUnlock');
+              for (const job of jobCheckResult.newlyUnlocked) {
+                toast.success(`⚔️ しょくぎょう「${job.name}」がかいほうされた！`, {
+                  duration: 5000,
+                  style: {
+                    background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+                    border: '2px solid #7c3aed',
+                    color: '#c4b5fd',
+                  },
+                });
+              }
+              // UserJobsを再取得
+              const updatedUserJobs = await userService.getUserJobs(user.userId);
+              setUserJobs(updatedUserJobs);
             }
           }
         }
