@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <!-- Background -->
+  <rect width="180" height="180" rx="20" fill="#1e293b"/>
+  
+  <!-- Pixel art sword - scaled up -->
+  <g transform="translate(65, 20) scale(3)">
+    <!-- Blade -->
+    <g fill="#fbbf24">
+      <rect x="7" y="4" width="3" height="3"/>
+      <rect x="7" y="7" width="3" height="3"/>
+      <rect x="7" y="10" width="3" height="3"/>
+      <rect x="7" y="13" width="3" height="3"/>
+      <rect x="7" y="16" width="3" height="3"/>
+      <rect x="7" y="19" width="3" height="3"/>
+    </g>
+    
+    <!-- Guard -->
+    <g fill="#a855f7">
+      <rect x="1" y="22" width="3" height="3"/>
+      <rect x="4" y="22" width="3" height="3"/>
+      <rect x="7" y="22" width="3" height="3"/>
+      <rect x="10" y="22" width="3" height="3"/>
+      <rect x="13" y="22" width="3" height="3"/>
+    </g>
+    
+    <!-- Handle -->
+    <g fill="#78350f">
+      <rect x="7" y="25" width="3" height="3"/>
+      <rect x="7" y="28" width="3" height="3"/>
+      <rect x="7" y="31" width="3" height="3"/>
+    </g>
+    
+    <!-- Pommel -->
+    <rect x="7" y="34" width="3" height="3" fill="#fbbf24"/>
+  </g>
+</svg>
