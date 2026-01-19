@@ -233,7 +233,20 @@ aws dynamodb list-tables --region us-east-1
 
 MIT License
 
-## 👥 貢献
+## � ドキュメント
+
+詳細なドキュメントは [docs/](docs/README.md) を参照してください。
+
+| ドキュメント | 説明 |
+|-------------|------|
+| [docs/DEPLOY.md](docs/DEPLOY.md) | CI/CDデプロイ設定 |
+| [docs/SECRETS.md](docs/SECRETS.md) | シークレット管理 |
+| [docs/IMAGE_GENERATION.md](docs/IMAGE_GENERATION.md) | キャラクター画像生成 |
+| [docs/JOB_CREATION_GUIDE.md](docs/JOB_CREATION_GUIDE.md) | ジョブ追加ガイド |
+| [docs/frontend/GUIDELINES.md](docs/frontend/GUIDELINES.md) | フロントエンド開発ガイドライン |
+| [docs/testing/README.md](docs/testing/README.md) | テスト実行ガイド |
+
+## �👥 貢献
 
 1. Fork the repository
 2. Create your feature branch (\`git checkout -b feature/amazing-feature\`)

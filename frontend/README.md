@@ -1,11 +1,36 @@
+# Habits-RPG Frontend
 
-  # Habits-rpg_top
+Habits-RPGのフロントエンドアプリケーションです。
 
-  This is a code bundle for Habits-rpg_top. The original project is available at https://www.figma.com/design/bhlZpYDbP24mMTy8FKzPeH/Habits-rpg_top.
+## 技術スタック
 
-  ## Running the code
+- React 18 + TypeScript
+- Vite (ビルドツール)
+- Tailwind CSS (スタイリング)
+- shadcn/ui (UIコンポーネント)
+- Recharts (チャート)
+- AWS Amplify Gen2 (バックエンド連携)
 
-  Run `npm i` to install the dependencies.
+## セットアップ
 
-  Run `npm run dev` to start the development server.
-  
+```bash
+# 依存関係インストール
+npm install
+
+# 開発サーバー起動
+npm run dev
+```
+
+## 開発コマンド
+
+```bash
+npm run dev       # 開発サーバー起動 (localhost:3001)
+npm run build     # 本番ビルド
+npm run preview   # ビルドプレビュー
+npm run lint      # Lint実行
+```
+
+## ドキュメント
+
+- [開発ガイドライン](../docs/frontend/GUIDELINES.md)
+- [プロジェクト全体](../README.md)
