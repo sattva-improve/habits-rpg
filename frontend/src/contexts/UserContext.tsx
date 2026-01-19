@@ -58,11 +58,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
 
-  // 今日の日付をYYYY-MM-DD形式で取得
-  const getTodayDate = () => {
-    const now = new Date();
-    return now.toISOString().split('T')[0];
-  };
+  // 今日の日付をYYYY-MM-DD形式で取得（ユーザーのタイムゾーンを考慮）
+  const getTodayDate = useCallback(() => {
+    const timezone = userData?.timezone ?? 'Asia/Tokyo';
+    try {
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('sv-SE', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      return formatter.format(now);
+    } catch {
+      // タイムゾーンが無効な場合はローカル時刻を使用
+      return new Date().toISOString().split('T')[0];
+    }
+  }, [userData?.timezone]);
 
   // ユーザーデータを取得または作成
   const refreshUserData = useCallback(async () => {
@@ -278,12 +290,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
       });
 
       // 習慣のストリーク更新をローカルで即座に反映
+      // 注: 実際のストリーク値はrecordCompletionで計算されるため、
+      // バックグラウンド更新で正確な値に更新される
       setHabits(prev => prev.map(h => {
         if (h.habitId === habitId) {
+          // ストリーク値はresult.record.streakAtCompletionから取得
+          const newStreak = result.record!.streakAtCompletion;
           return {
             ...h,
-            currentStreak: h.currentStreak + 1,
-            bestStreak: Math.max(h.bestStreak, h.currentStreak + 1),
+            currentStreak: newStreak,
+            bestStreak: Math.max(h.bestStreak, newStreak),
             totalCompletions: h.totalCompletions + 1,
           };
         }

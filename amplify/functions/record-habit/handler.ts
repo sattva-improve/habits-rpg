@@ -149,6 +149,23 @@ function generateUlid(): string {
 }
 
 /**
+ * 2つの日付が連続しているかチェック（前日かどうか）
+ */
+function isConsecutiveDay(previousDate: string, currentDate: string): boolean {
+  const prev = new Date(previousDate);
+  const curr = new Date(currentDate);
+  
+  // 時間をリセットして日付のみで比較
+  prev.setHours(0, 0, 0, 0);
+  curr.setHours(0, 0, 0, 0);
+  
+  const diffTime = curr.getTime() - prev.getTime();
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+  
+  return diffDays === 1;
+}
+
+/**
  * Lambda Handler
  */
 export const handler: AppSyncResolverHandler<RecordHabitInput, RecordHabitResult> = async (event) => {
@@ -163,10 +180,26 @@ export const handler: AppSyncResolverHandler<RecordHabitInput, RecordHabitResult
     difficulty: 'normal',
     currentStreak: 7,
     statType: 'VIT',
+    lastCompletedDate: null as string | null, // 実際にはDBから取得
   };
 
-  // ストリーク計算（実際にはDBから前回の記録日を確認）
-  const newStreak = completed ? habit.currentStreak + 1 : 0;
+  // ストリーク計算（連続日かどうかをチェック）
+  let newStreak: number;
+  if (!completed) {
+    newStreak = 0;
+  } else if (habit.lastCompletedDate === null) {
+    // 初めての完了
+    newStreak = 1;
+  } else if (habit.lastCompletedDate === completedDate) {
+    // 同じ日に既に完了している（重複防止）
+    newStreak = habit.currentStreak;
+  } else if (isConsecutiveDay(habit.lastCompletedDate, completedDate)) {
+    // 前日に完了している → ストリーク継続
+    newStreak = habit.currentStreak + 1;
+  } else {
+    // 連続していない → ストリークリセット
+    newStreak = 1;
+  }
 
   // 経験値計算
   const expEarned = completed ? calculateExp(habit.difficulty, newStreak) : 0;
