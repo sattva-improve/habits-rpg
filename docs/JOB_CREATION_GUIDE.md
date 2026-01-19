@@ -155,7 +155,17 @@ $response = Invoke-RestMethod -Uri "http://127.0.0.1:7860/sdapi/v1/txt2img" -Met
 [IO.File]::WriteAllBytes("/home/nekonisi/workspace/Habits-rpg/frontend/public/sprites/male/ninja.png", [Convert]::FromBase64String($response.images[0]))
 ```
 
-### 2.5 背景除去（Python）
+### 2.5 背景除去（rembg）
+
+生成された画像は白背景のため、`rembg` を使用して透過処理を行います。
+
+#### rembgのインストール
+
+```bash
+pip install rembg pillow
+```
+
+#### 単一ファイルの背景除去
 
 ```python
 from rembg import remove
@@ -171,6 +181,54 @@ input_image = Image.open("frontend/public/sprites/female/ninja.png")
 output_image = remove(input_image)
 output_image.save("frontend/public/sprites/female/ninja.png")
 ```
+
+#### 複数ファイルの一括背景除去
+
+```python
+from rembg import remove
+from PIL import Image
+import os
+
+def remove_background_batch(file_list):
+    """指定されたファイルリストの背景を一括除去"""
+    for filepath in file_list:
+        if os.path.exists(filepath):
+            print(f"Processing: {filepath}")
+            input_image = Image.open(filepath)
+            output_image = remove(input_image)
+            output_image.save(filepath)
+            print(f"  -> Saved with transparent background")
+        else:
+            print(f"File not found: {filepath}")
+
+# 使用例
+files = [
+    "frontend/public/sprites/male/ninja.png",
+    "frontend/public/sprites/female/ninja.png",
+]
+remove_background_batch(files)
+```
+
+#### ワンライナーでの実行
+
+```bash
+cd /home/nekonisi/workspace/Habits-rpg && python3 << 'EOF'
+from rembg import remove
+from PIL import Image
+
+for gender in ["male", "female"]:
+    filepath = f"frontend/public/sprites/{gender}/ninja.png"
+    img = Image.open(filepath)
+    remove(img).save(filepath)
+    print(f"Processed: {filepath}")
+EOF
+```
+
+#### 注意事項
+
+- CUDAエラーが出る場合がありますが、CPUにフォールバックするため無視して問題ありません
+- 処理には1ファイルあたり約1-2秒かかります
+- 元ファイルは上書きされます（バックアップが必要な場合は事前にコピー）
 
 ### 2.6 配置先
 
@@ -237,6 +295,44 @@ GitHub Actionsが自動的にデプロイを実行します。
 | 体術系 | athletic clothes, sports, training, martial arts |
 | 隠密系 | ninja, shadow, stealth, assassin, hood |
 | 自然系 | ranger, bow, forest, hunter, druid |
+| 上位戦闘系 | holy knight, paladin, hero, legendary armor, golden sword |
+| 上位魔法系 | arch mage, sage, crystal staff, ancient tome, mystic robe |
+| 上位信仰系 | high priest, enlightened, glowing aura, divine light |
+| 上位技術系 | master craftsman, legendary tools, golden hammer |
+| 上位芸能系 | superstar, virtuoso, golden instrument, stage costume |
+| 上位体術系 | olympian, champion, gold medal, victory pose |
+| 究極系 | crown, golden armor, all elements, legendary hero |
+
+### 現在の全ジョブ一覧
+
+| ティア | ジョブID | 名前 | プロンプトキーワード |
+|--------|---------|------|---------------------|
+| novice | beginner | ビギナー | simple clothes, adventurer, traveler |
+| apprentice | warrior_apprentice | 見習い戦士 | light armor, training sword |
+| apprentice | scholar_apprentice | 見習い学者 | apprentice robe, book |
+| apprentice | monk_apprentice | 見習い僧侶 | simple monk robe, prayer beads |
+| apprentice | artisan_apprentice | 見習い職人 | apron, hammer, tools |
+| apprentice | performer_apprentice | 見習い芸人 | colorful clothes, tambourine |
+| apprentice | athlete_apprentice | 見習いアスリート | sports clothes, training |
+| journeyman | warrior | 戦士 | full armor, knight, sword, shield |
+| journeyman | scholar | 学者 | wizard robe, magic staff, spellbook |
+| journeyman | monk | 僧侶 | monk robe, martial arts, zen |
+| journeyman | artisan | 職人 | blacksmith, forge hammer, leather apron |
+| journeyman | bard | 吟遊詩人 | bard outfit, lute, musical instrument |
+| journeyman | athlete | アスリート | athletic clothes, gold medal |
+| expert | knight | 騎士 | holy knight, paladin, silver armor, cape, sword, shield |
+| expert | sage | 賢者 | sage robe, crystal ball, ancient tome, wise |
+| expert | high_monk | 高僧 | high priest robe, golden prayer beads, serene |
+| expert | master_artisan | 匠 | master craftsman, golden tools, legendary hammer |
+| expert | virtuoso | 名人 | virtuoso, golden lute, elegant costume |
+| expert | champion | チャンピオン | champion, trophy, gold medal, victory pose |
+| master | hero | 英雄 | legendary hero, golden armor, legendary sword, cape |
+| master | arch_sage | 大賢者 | arch mage, staff of power, floating books, mystic aura |
+| master | enlightened | 覚者 | enlightened monk, glowing aura, lotus, divine light |
+| master | legend_artisan | 伝説の職人 | legendary craftsman, divine hammer, rainbow forge |
+| master | superstar | スーパースター | superstar, stage lights, golden microphone, sparkles |
+| master | olympian | オリンピアン | olympian, multiple gold medals, torch, laurel wreath |
+| grandmaster | habit_master | 習慣の極致 | ultimate hero, golden crown, all elements, legendary |
 
 ### 必須チェックリスト
 
