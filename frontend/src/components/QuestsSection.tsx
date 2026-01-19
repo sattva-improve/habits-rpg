@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import { Scroll, PlusCircle, Loader2 } from 'lucide-react';
 import { HabitCard } from './HabitCard';
 import { useUser } from '@/contexts/UserContext';
+import { useSound } from '@/hooks';
 import { DIFFICULTY_CONFIG } from '@/constants/game';
 import type { Habit } from '@/types';
 
 export function QuestsSection() {
   const { habits, isLoading, completeHabit, deleteHabit, isHabitCompletedToday } = useUser();
+  const { playSound } = useSound();
   const [completingHabit, setCompletingHabit] = useState<string | null>(null);
 
   // 習慣を完了/未完了に切り替え
@@ -18,7 +20,11 @@ export function QuestsSection() {
       setCompletingHabit(habitId);
       try {
         // 完了として記録（経験値・ステータス更新も含む）
-        await completeHabit(habitId);
+        const result = await completeHabit(habitId);
+        // 完了成功時にサウンドを再生
+        if (result) {
+          playSound('complete');
+        }
       } finally {
         setCompletingHabit(null);
       }
