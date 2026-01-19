@@ -113,6 +113,66 @@ function calculateStatLevel(statExp: number): number {
   return Math.floor(statExp / 100) + 1;
 }
 
+/**
+ * ユーザーのタイムゾーンを考慮して今日の日付を取得
+ */
+function getTodayDate(timezone: string = 'Asia/Tokyo'): string {
+  try {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('sv-SE', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return formatter.format(now);
+  } catch {
+    // タイムゾーンが無効な場合はUTCを使用
+    return new Date().toISOString().split('T')[0];
+  }
+}
+
+/**
+ * 2つの日付が連続しているかチェック（前日かどうか）
+ */
+function isConsecutiveDay(previousDate: string, currentDate: string): boolean {
+  const prev = new Date(previousDate);
+  const curr = new Date(currentDate);
+  
+  // 時間をリセットして日付のみで比較
+  prev.setHours(0, 0, 0, 0);
+  curr.setHours(0, 0, 0, 0);
+  
+  const diffTime = curr.getTime() - prev.getTime();
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+  
+  return diffDays === 1;
+}
+
+/**
+ * 習慣の最新の完了日を取得
+ */
+async function getLastCompletionDate(habitId: string): Promise<string | null> {
+  const { data, errors } = await client.models.HabitRecord.list({
+    filter: { 
+      habitId: { eq: habitId },
+      completed: { eq: true }
+    },
+  });
+
+  if (errors || !data || data.length === 0) {
+    return null;
+  }
+
+  // 最新の完了日を取得
+  type RecordWithDate = { completedDate?: string | null };
+  const sortedRecords = (data as RecordWithDate[])
+    .filter((r): r is { completedDate: string } => typeof r.completedDate === 'string')
+    .sort((a, b) => b.completedDate.localeCompare(a.completedDate));
+
+  return sortedRecords[0]?.completedDate ?? null;
+}
+
 export const habitService = {
   /**
    * ユーザーの習慣一覧を取得
@@ -239,8 +299,26 @@ export const habitService = {
       }
       const user = userData as unknown as User;
 
-      // 3. 新しいストリーク計算
-      const newStreak = habit.currentStreak + 1;
+      // 3. 前回の完了日を取得してストリーク計算
+      const lastCompletionDate = await getLastCompletionDate(habitId);
+      let newStreak: number;
+      
+      if (lastCompletionDate === null) {
+        // 初めての完了
+        newStreak = 1;
+      } else if (lastCompletionDate === date) {
+        // 同じ日に既に完了している（重複防止）
+        console.log('Already completed today');
+        return { record: null, expGained: 0, levelUp: false };
+      } else if (isConsecutiveDay(lastCompletionDate, date)) {
+        // 前日に完了している → ストリーク継続
+        newStreak = habit.currentStreak + 1;
+      } else {
+        // 連続していない → ストリークリセット
+        newStreak = 1;
+        console.log(`Streak reset: last completion was ${lastCompletionDate}, recording for ${date}`);
+      }
+      
       const newBestStreak = Math.max(newStreak, habit.bestStreak);
 
       // 4. 経験値計算
