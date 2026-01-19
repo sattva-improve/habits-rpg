@@ -6,6 +6,8 @@ export { QuestsSection } from './QuestsSection';
 export { StatusCard } from './StatusCard';
 export { HabitCard } from './HabitCard';
 export { HabitCalendar } from './HabitCalendar';
+export { ShareableCard } from './ShareableCard';
+export { ShareModal } from './ShareModal';
 
 // Common Components
 export { ImageWithFallback } from './common/ImageWithFallback';
