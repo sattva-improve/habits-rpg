@@ -212,28 +212,30 @@ export function CreateHabit() {
 
           {/* Section 2: Game Settings */}
           <div className="bg-slate-900/40 border border-amber-800/30 rounded-lg p-6">
-            <h2 className="text-xl font-bold text-amber-300 mb-4">ゲームせってい</h2>
+            <h2 className="text-xl font-bold text-amber-300 mb-4">⚔️ ゲームせってい</h2>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* Category */}
               <div>
-                <label className="block text-sm font-bold text-amber-200 mb-2">
-                  カテゴリー
+                <label className="block text-base font-bold text-amber-200 mb-3">
+                  📂 カテゴリー
                 </label>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                   {CATEGORIES.map((cat) => (
                     <button
                       key={cat.value}
                       type="button"
                       onClick={() => handleCategoryChange(cat.value)}
-                      className={`px-3 py-2 rounded-lg border-2 transition-all text-sm ${
+                      className={`flex flex-col items-center justify-center px-3 py-4 rounded-xl border-2 transition-all ${
                         formData.category === cat.value
-                          ? 'border-amber-500 bg-amber-950/50'
-                          : 'border-amber-900/30 bg-slate-900/40 hover:border-amber-700'
+                          ? 'border-amber-400 bg-amber-950/70 shadow-lg shadow-amber-500/20 scale-105'
+                          : 'border-amber-900/40 bg-slate-900/60 hover:border-amber-600 hover:bg-slate-800/60'
                       }`}
                     >
-                      <span className="mr-1">{cat.icon}</span>
-                      {cat.label}
+                      <span className="text-2xl mb-1">{cat.icon}</span>
+                      <span className={`text-sm font-bold ${formData.category === cat.value ? 'text-amber-200' : 'text-amber-300/80'}`}>
+                        {cat.label}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -241,59 +243,59 @@ export function CreateHabit() {
 
               {/* Stat Type */}
               <div>
-                <label className="block text-sm font-bold text-amber-200 mb-2">
-                  あがるパラメータ
+                <label className="block text-base font-bold text-amber-200 mb-3">
+                  📊 あがるパラメータ
                 </label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {STAT_TYPES.map((stat) => (
                     <button
                       key={stat.value}
                       type="button"
                       onClick={() => setFormData({ ...formData, statType: stat.value })}
-                      className={`px-3 py-3 rounded-lg border-2 transition-all text-left ${
+                      className={`px-4 py-4 rounded-xl border-2 transition-all text-left ${
                         formData.statType === stat.value
-                          ? 'border-amber-500 bg-amber-950/50'
-                          : 'border-amber-900/30 bg-slate-900/40 hover:border-amber-700'
+                          ? 'border-amber-400 bg-amber-950/70 shadow-lg shadow-amber-500/20 scale-105'
+                          : 'border-amber-900/40 bg-slate-900/60 hover:border-amber-600 hover:bg-slate-800/60'
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{stat.icon}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{stat.icon}</span>
                         <div>
-                          <div className={`text-sm font-bold ${stat.color}`}>{stat.label}</div>
-                          <div className="text-xs text-amber-400/60">{stat.description}</div>
+                          <div className={`text-base font-bold ${stat.color}`}>{stat.label}</div>
+                          <div className="text-xs text-amber-400/70">{stat.description}</div>
                         </div>
                       </div>
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-amber-400/70 mt-2">
+                <p className="text-xs text-amber-400/70 mt-3">
                   ※ この習慣を達成すると、選んだパラメータがあがります
                 </p>
               </div>
 
               {/* Difficulty */}
               <div>
-                <label className="block text-sm font-bold text-amber-200 mb-2">
-                  なんいど
+                <label className="block text-base font-bold text-amber-200 mb-3">
+                  ⭐ なんいど
                 </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {DIFFICULTIES.map((diff) => (
                     <button
                       key={diff.value}
                       type="button"
                       onClick={() => setFormData({ ...formData, difficulty: diff.value })}
-                      className={`px-4 py-3 rounded-lg border-2 transition-all ${
+                      className={`px-4 py-4 rounded-xl border-2 transition-all ${
                         formData.difficulty === diff.value
-                          ? 'border-amber-500 bg-amber-950/50'
-                          : 'border-amber-900/30 bg-slate-900/40 hover:border-amber-700'
+                          ? 'border-amber-400 bg-amber-950/70 shadow-lg shadow-amber-500/20 scale-105'
+                          : 'border-amber-900/40 bg-slate-900/60 hover:border-amber-600 hover:bg-slate-800/60'
                       }`}
                     >
-                      <div className="text-sm font-bold text-amber-100">{diff.label}</div>
-                      <div className={`text-xs ${diff.color}`}>{diff.exp}</div>
+                      <div className="text-base font-bold text-amber-100">{diff.label}</div>
+                      <div className={`text-sm font-semibold ${diff.color}`}>{diff.exp}</div>
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-amber-400/70 mt-2">
+                <p className="text-xs text-amber-400/70 mt-3">
                   ※ なんいどがたかいほど、もらえるけいけんちがふえる
                 </p>
               </div>
