@@ -424,8 +424,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     try {
       const updatedUser = await userService.updateUser(user.userId, { currentJobId: jobId });
+      console.log('⚔️ selectJob - updatedUser:', updatedUser);
+      console.log('⚔️ selectJob - updatedUser.currentJobId:', updatedUser?.currentJobId);
       if (updatedUser) {
-        setUserData(updatedUser);
+        // 明示的にcurrentJobIdを含む新しいオブジェクトを作成
+        const newUserData = { ...userData, ...updatedUser, currentJobId: jobId };
+        console.log('⚔️ selectJob - newUserData:', newUserData);
+        setUserData(newUserData);
         const job = jobs.find(j => j.jobId === jobId);
         console.log(`⚔️ 職業を「${job?.name ?? jobId}」に変更しました！`);
         return true;

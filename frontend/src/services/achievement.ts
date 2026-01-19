@@ -274,13 +274,18 @@ export const achievementService = {
         achievements?: string[];
       } | undefined;
 
-      if (!requirements) {
-        // 要件がなければ解放可能
-        const unlocked = await this.unlockJob(user.userId, job.jobId);
-        if (unlocked) {
-          newlyUnlocked.push(job);
-          unlockedJobIds.add(job.jobId);
-        }
+      // 要件がない、または空オブジェクトの場合
+      const hasRequirements = requirements && (
+        requirements.level !== undefined ||
+        requirements.stats !== undefined ||
+        requirements.jobs !== undefined ||
+        requirements.achievements !== undefined
+      );
+
+      if (!hasRequirements) {
+        // 要件がなければ解放可能（beginnerのみ該当）
+        // ただし、beginnerは最初から解放済み扱いなのでここに来るのは異常
+        console.log(`⚠️ Job ${job.jobId} has no requirements, skipping auto-unlock`);
         continue;
       }
 
