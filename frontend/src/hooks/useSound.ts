@@ -6,7 +6,7 @@
 import { useCallback, useRef } from 'react';
 
 // サウンドタイプの定義
-export type SoundType = 'complete' | 'levelUp' | 'achievement' | 'click';
+export type SoundType = 'complete' | 'levelUp' | 'achievement' | 'click' | 'jobUnlock' | 'menuOpen' | 'error' | 'success';
 
 // 各サウンドの設定
 const SOUND_CONFIG: Record<SoundType, { frequency: number; duration: number; type: OscillatorType; volume: number }[]> = {
@@ -36,6 +36,30 @@ const SOUND_CONFIG: Record<SoundType, { frequency: number; duration: number; typ
   // クリック音（シンプル）
   click: [
     { frequency: 800, duration: 0.05, type: 'sine', volume: 0.15 },
+  ],
+  // 職業解放時（勇壮なファンファーレ）
+  jobUnlock: [
+    { frequency: 293.66, duration: 0.12, type: 'square', volume: 0.25 }, // D4
+    { frequency: 369.99, duration: 0.12, type: 'square', volume: 0.25 }, // F#4
+    { frequency: 440.00, duration: 0.12, type: 'square', volume: 0.25 }, // A4
+    { frequency: 587.33, duration: 0.2, type: 'square', volume: 0.3 },   // D5
+    { frequency: 739.99, duration: 0.15, type: 'square', volume: 0.28 }, // F#5
+    { frequency: 880.00, duration: 0.35, type: 'square', volume: 0.25 }, // A5
+  ],
+  // メニュー開閉音
+  menuOpen: [
+    { frequency: 600, duration: 0.06, type: 'sine', volume: 0.12 },
+    { frequency: 900, duration: 0.08, type: 'sine', volume: 0.1 },
+  ],
+  // エラー音（低音で短い）
+  error: [
+    { frequency: 200, duration: 0.15, type: 'sawtooth', volume: 0.2 },
+    { frequency: 150, duration: 0.2, type: 'sawtooth', volume: 0.15 },
+  ],
+  // 成功音（短い上昇音）
+  success: [
+    { frequency: 440, duration: 0.08, type: 'sine', volume: 0.2 },
+    { frequency: 660, duration: 0.12, type: 'sine', volume: 0.18 },
   ],
 };
 
@@ -90,6 +114,37 @@ function playTone(
 
   oscillator.start(startTime);
   oscillator.stop(startTime + duration);
+}
+
+// グローバルで再生中かどうかのフラグ
+let isGlobalPlaying = false;
+
+/**
+ * グローバルサウンド再生関数（Context外でも使用可能）
+ */
+export function playSoundGlobal(type: SoundType): void {
+  // 連続再生を防ぐ
+  if (isGlobalPlaying) return;
+  
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const sounds = SOUND_CONFIG[type];
+  if (!sounds) return;
+
+  isGlobalPlaying = true;
+
+  let currentTime = ctx.currentTime;
+  
+  for (const sound of sounds) {
+    playTone(ctx, sound.frequency, sound.duration, sound.type, sound.volume, currentTime);
+    currentTime += sound.duration * 0.8;
+  }
+
+  const totalDuration = sounds.reduce((sum, s) => sum + s.duration, 0);
+  setTimeout(() => {
+    isGlobalPlaying = false;
+  }, totalDuration * 1000);
 }
 
 /**
