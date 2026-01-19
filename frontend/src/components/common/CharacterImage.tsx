@@ -134,40 +134,76 @@ export function CharacterImage({
  */
 export const CHARACTER_IMAGE_PATHS = {
   male: {
+    // Novice
     beginner: '/sprites/male/beginner.png',
-    warrior: '/sprites/male/warrior.png',
+    // Apprentice (見習い)
     warrior_apprentice: '/sprites/male/warrior_apprentice.png',
-    scholar: '/sprites/male/scholar.png',
     scholar_apprentice: '/sprites/male/scholar_apprentice.png',
-    monk: '/sprites/male/monk.png',
     monk_apprentice: '/sprites/male/monk_apprentice.png',
-    artisan: '/sprites/male/artisan.png',
     artisan_apprentice: '/sprites/male/artisan_apprentice.png',
-    bard: '/sprites/male/bard.png',
     performer_apprentice: '/sprites/male/performer_apprentice.png',
-    athlete: '/sprites/male/athlete.png',
     athlete_apprentice: '/sprites/male/athlete_apprentice.png',
+    // Journeyman (職人)
+    warrior: '/sprites/male/warrior.png',
+    scholar: '/sprites/male/scholar.png',
+    monk: '/sprites/male/monk.png',
+    artisan: '/sprites/male/artisan.png',
+    bard: '/sprites/male/bard.png',
+    athlete: '/sprites/male/athlete.png',
+    // Expert (熟練者)
     knight: '/sprites/male/knight.png',
     sage: '/sprites/male/sage.png',
+    high_monk: '/sprites/male/high_monk.png',
+    master_artisan: '/sprites/male/artisan.png', // フォールバック
+    virtuoso: '/sprites/male/bard.png', // フォールバック
+    champion: '/sprites/male/athlete.png', // フォールバック
+    // Master (達人)
+    hero: '/sprites/male/knight.png', // フォールバック
+    arch_sage: '/sprites/male/sage.png', // フォールバック
+    enlightened: '/sprites/male/high_monk.png', // フォールバック
+    legend_artisan: '/sprites/male/artisan.png', // フォールバック
+    superstar: '/sprites/male/bard.png', // フォールバック
+    olympian: '/sprites/male/athlete.png', // フォールバック
+    // Grandmaster (極致)
+    habit_master: '/sprites/male/knight.png', // フォールバック
+    // Legacy
     mage: '/sprites/male/mage.png',
     default: '/sprites/male/beginner.png',
   },
   female: {
+    // Novice
     beginner: '/sprites/female/beginner.png',
-    warrior: '/sprites/female/warrior.png',
+    // Apprentice (見習い)
     warrior_apprentice: '/sprites/female/warrior_apprentice.png',
-    scholar: '/sprites/female/scholar.png',
     scholar_apprentice: '/sprites/female/scholar_apprentice.png',
-    monk: '/sprites/female/monk.png',
     monk_apprentice: '/sprites/female/monk_apprentice.png',
-    artisan: '/sprites/female/artisan.png',
     artisan_apprentice: '/sprites/female/artisan_apprentice.png',
-    bard: '/sprites/female/bard.png',
     performer_apprentice: '/sprites/female/performer_apprentice.png',
-    athlete: '/sprites/female/athlete.png',
     athlete_apprentice: '/sprites/female/athlete_apprentice.png',
+    // Journeyman (職人)
+    warrior: '/sprites/female/warrior.png',
+    scholar: '/sprites/female/scholar.png',
+    monk: '/sprites/female/monk.png',
+    artisan: '/sprites/female/artisan.png',
+    bard: '/sprites/female/bard.png',
+    athlete: '/sprites/female/athlete.png',
+    // Expert (熟練者)
     knight: '/sprites/female/knight.png',
     sage: '/sprites/female/sage.png',
+    high_monk: '/sprites/female/monk.png', // フォールバック
+    master_artisan: '/sprites/female/artisan.png', // フォールバック
+    virtuoso: '/sprites/female/bard.png', // フォールバック
+    champion: '/sprites/female/athlete.png', // フォールバック
+    // Master (達人)
+    hero: '/sprites/female/knight.png', // フォールバック
+    arch_sage: '/sprites/female/sage.png', // フォールバック
+    enlightened: '/sprites/female/monk.png', // フォールバック
+    legend_artisan: '/sprites/female/artisan.png', // フォールバック
+    superstar: '/sprites/female/bard.png', // フォールバック
+    olympian: '/sprites/female/athlete.png', // フォールバック
+    // Grandmaster (極致)
+    habit_master: '/sprites/female/knight.png', // フォールバック
+    // Legacy
     mage: '/sprites/female/mage.png',
     default: '/sprites/female/beginner.png',
   },
