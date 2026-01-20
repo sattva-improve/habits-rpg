@@ -114,7 +114,6 @@ export function Header() {
             {/* キャラクター画像 */}
             <CharacterImage
               src={getCharacterImagePath(userData?.currentJobId, userData?.gender ?? 'male')}
-              backgroundSrc="/sprites/backgrounds/default.png"
               width={160}
               height={160}
               className="relative z-10"

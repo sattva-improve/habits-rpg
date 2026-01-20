@@ -15,8 +15,6 @@ export interface CharacterImageProps {
   pixelated?: boolean;
   /** フォールバック画像のURL */
   fallbackSrc?: string;
-  /** 背景画像のURL */
-  backgroundSrc?: string;
 }
 
 /**
@@ -31,7 +29,6 @@ export function CharacterImage({
   className = '',
   pixelated = true,
   fallbackSrc,
-  backgroundSrc,
 }: CharacterImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -65,39 +62,6 @@ export function CharacterImage({
         style={{ width, height }}
       >
         <span className="text-amber-400/50 text-4xl">?</span>
-      </div>
-    );
-  }
-
-  // 背景画像がある場合はラッパーで囲む
-  if (backgroundSrc) {
-    return (
-      <div
-        className={`relative ${className}`}
-        style={{ width, height }}
-      >
-        {/* 背景画像 */}
-        <img
-          src={backgroundSrc}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{
-            imageRendering: pixelated ? 'pixelated' : 'auto',
-          }}
-        />
-        {/* キャラクター画像 */}
-        {isLoaded ? (
-          <img
-            src={currentSrc}
-            alt={alt}
-            className="absolute inset-0 w-full h-full object-contain"
-            style={{
-              imageRendering: pixelated ? 'pixelated' : 'auto',
-            }}
-          />
-        ) : (
-          <div className="absolute inset-0 bg-amber-800/30 animate-pulse" />
-        )}
       </div>
     );
   }
