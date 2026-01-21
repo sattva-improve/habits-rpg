@@ -45,7 +45,7 @@ export function ShareModal({ open, onOpenChange, completedCount = 0, totalHabits
     setIsLoadingPreview(true);
     try {
       // 画像のロードとDOM更新を待つため十分な時間を確保
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 800));
       const dataUrl = await generatePreview(cardRef.current);
       setPreview(dataUrl);
     } catch (error) {
@@ -61,7 +61,7 @@ export function ShareModal({ open, onOpenChange, completedCount = 0, totalHabits
       // 画像のロードとDOMが描画されるのを待ってからプレビュー生成
       const timer = setTimeout(() => {
         updatePreview();
-      }, 600);
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [open, variant, updatePreview]);
@@ -192,13 +192,14 @@ export function ShareModal({ open, onOpenChange, completedCount = 0, totalHabits
           )}
         </div>
 
-        {/* 実際のカード（非表示でレンダリング） */}
+        {/* 実際のカード（画面外でレンダリング - html2canvasはvisibility:hiddenだとキャプチャできない） */}
         <div 
           style={{ 
-            position: 'absolute', 
+            position: 'fixed', 
             left: '-9999px', 
-            top: '-9999px',
-            visibility: 'hidden',
+            top: 0,
+            zIndex: -1,
+            pointerEvents: 'none',
           }}
         >
           <ShareableCard

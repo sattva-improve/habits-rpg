@@ -28,9 +28,17 @@ export async function generateCanvas(element: HTMLElement): Promise<HTMLCanvasEl
   const canvas = await html2canvas(element, {
     scale: 2, // 高解像度
     useCORS: true,
-    allowTaint: true,
+    allowTaint: false, // taintを許可しない（CORSエラー防止）
     backgroundColor: '#0f172a',
     logging: false,
+    imageTimeout: 15000, // 画像読み込みのタイムアウトを延長
+    onclone: (clonedDoc, clonedElement) => {
+      // クローンされた要素を可視状態にする
+      clonedElement.style.visibility = 'visible';
+      clonedElement.style.position = 'static';
+      clonedElement.style.left = '0';
+      clonedElement.style.top = '0';
+    },
   });
   
   return canvas;

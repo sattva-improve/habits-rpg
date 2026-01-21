@@ -69,12 +69,21 @@ export const ShareableCard = forwardRef<HTMLDivElement, ShareableCardProps>(
     useEffect(() => {
       const loadImage = async () => {
         try {
-          const response = await fetch(characterPath);
+          // 絶対URLを構築してfetch（相対パスだとhtml2canvasで問題が起きる場合がある）
+          const absoluteUrl = new URL(characterPath, window.location.origin).href;
+          const response = await fetch(absoluteUrl);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch image: ${response.status}`);
+          }
           const blob = await response.blob();
           const reader = new FileReader();
           reader.onloadend = () => {
             setImageSrc(reader.result as string);
             setImageLoaded(true);
+          };
+          reader.onerror = () => {
+            console.error('Failed to read image as data URL');
+            setImageLoaded(true); // エラーでも処理を続行
           };
           reader.readAsDataURL(blob);
         } catch (error) {
