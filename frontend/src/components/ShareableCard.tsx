@@ -19,7 +19,7 @@ interface RadarChartSVGProps {
 
 function RadarChartSVG({ stats, size = 200, maxValue }: RadarChartSVGProps) {
   const center = size / 2;
-  const radius = size * 0.4;
+  const radius = size * 0.32; // ラベル用のスペースを確保するため小さめに
   const numAxes = stats.length;
   
   // 最大値を動的に計算
@@ -55,10 +55,10 @@ function RadarChartSVG({ stats, size = 200, maxValue }: RadarChartSVGProps) {
     return `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`;
   }).join(' ') + ' Z';
 
-  // ラベル位置を計算
+  // ラベル位置を計算（SVG内に収まるよう調整）
   const getLabelPosition = (index: number) => {
     const angle = getAngle(index);
-    const labelRadius = radius + 30;
+    const labelRadius = radius + size * 0.12; // サイズに応じて調整
     return {
       x: center + labelRadius * Math.cos(angle),
       y: center + labelRadius * Math.sin(angle),
@@ -446,32 +446,32 @@ export const ShareableCard = forwardRef<HTMLDivElement, ShareableCardProps>(
           </div>
 
           {/* 右側: ステータスとストリーク */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: isSquare ? 20 : 12 }}>
             {/* 経験値バー */}
             <div
               style={{
                 background: 'rgba(30, 41, 59, 0.8)',
                 border: '2px solid rgba(217, 119, 6, 0.5)',
                 borderRadius: 12,
-                padding: 20,
+                padding: isSquare ? 20 : 14,
               }}
             >
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  marginBottom: 10,
+                  marginBottom: isSquare ? 10 : 8,
                 }}
               >
-                <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>けいけんち</span>
-                <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>
+                <span style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: isSquare ? 16 : 14 }}>けいけんち</span>
+                <span style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: isSquare ? 16 : 14 }}>
                   {totalExp - currentLevelExp} / {nextLevelExp - currentLevelExp}
                 </span>
               </div>
               <div
                 style={{
                   width: '100%',
-                  height: 20,
+                  height: isSquare ? 20 : 16,
                   background: 'rgba(15, 23, 42, 0.6)',
                   borderRadius: 10,
                   overflow: 'hidden',
@@ -492,61 +492,61 @@ export const ShareableCard = forwardRef<HTMLDivElement, ShareableCardProps>(
             <div
               style={{
                 display: 'flex',
-                gap: 20,
+                gap: isSquare ? 20 : 12,
                 flexWrap: 'wrap',
               }}
             >
               <div
                 style={{
                   flex: 1,
-                  minWidth: 150,
+                  minWidth: isSquare ? 150 : 100,
                   background: 'rgba(30, 41, 59, 0.8)',
                   border: '2px solid rgba(217, 119, 6, 0.5)',
                   borderRadius: 12,
-                  padding: 16,
+                  padding: isSquare ? 16 : 12,
                   textAlign: 'center',
                 }}
               >
-                <div style={{ fontSize: 28, marginBottom: 4 }}>🔥</div>
-                <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: 28 }}>
+                <div style={{ fontSize: isSquare ? 28 : 22, marginBottom: 4 }}>🔥</div>
+                <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: isSquare ? 28 : 22 }}>
                   {currentStreak}日
                 </div>
-                <div style={{ color: '#94a3b8', fontSize: 14 }}>れんぞく</div>
+                <div style={{ color: '#94a3b8', fontSize: isSquare ? 14 : 12 }}>れんぞく</div>
               </div>
               <div
                 style={{
                   flex: 1,
-                  minWidth: 150,
+                  minWidth: isSquare ? 150 : 100,
                   background: 'rgba(30, 41, 59, 0.8)',
                   border: '2px solid rgba(217, 119, 6, 0.5)',
                   borderRadius: 12,
-                  padding: 16,
+                  padding: isSquare ? 16 : 12,
                   textAlign: 'center',
                 }}
               >
-                <div style={{ fontSize: 28, marginBottom: 4 }}>⭐</div>
-                <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: 28 }}>
+                <div style={{ fontSize: isSquare ? 28 : 22, marginBottom: 4 }}>⭐</div>
+                <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: isSquare ? 28 : 22 }}>
                   {maxStreak}日
                 </div>
-                <div style={{ color: '#94a3b8', fontSize: 14 }}>さいこうきろく</div>
+                <div style={{ color: '#94a3b8', fontSize: isSquare ? 14 : 12 }}>さいこうきろく</div>
               </div>
               {totalHabits > 0 && (
                 <div
                   style={{
                     flex: 1,
-                    minWidth: 150,
+                    minWidth: isSquare ? 150 : 100,
                     background: 'rgba(30, 41, 59, 0.8)',
                     border: '2px solid rgba(217, 119, 6, 0.5)',
                     borderRadius: 12,
-                    padding: 16,
+                    padding: isSquare ? 16 : 12,
                     textAlign: 'center',
                   }}
                 >
-                  <div style={{ fontSize: 28, marginBottom: 4 }}>✅</div>
-                  <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: 28 }}>
+                  <div style={{ fontSize: isSquare ? 28 : 22, marginBottom: 4 }}>✅</div>
+                  <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: isSquare ? 28 : 22 }}>
                     {completedCount}/{totalHabits}
                   </div>
-                  <div style={{ color: '#94a3b8', fontSize: 14 }}>きょうのクエスト</div>
+                  <div style={{ color: '#94a3b8', fontSize: isSquare ? 14 : 12 }}>きょうのクエスト</div>
                 </div>
               )}
             </div>
@@ -557,19 +557,18 @@ export const ShareableCard = forwardRef<HTMLDivElement, ShareableCardProps>(
                 background: 'rgba(30, 41, 59, 0.8)',
                 border: '2px solid rgba(217, 119, 6, 0.5)',
                 borderRadius: 12,
-                padding: 20,
+                padding: isSquare ? 20 : 16,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                flex: 1,
               }}
             >
               <div
                 style={{
                   color: '#fbbf24',
                   fontWeight: 'bold',
-                  marginBottom: 8,
-                  fontSize: 18,
+                  marginBottom: 4,
+                  fontSize: isSquare ? 18 : 16,
                 }}
               >
                 ステータス
@@ -579,12 +578,11 @@ export const ShareableCard = forwardRef<HTMLDivElement, ShareableCardProps>(
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  flex: 1,
                 }}
               >
                 <RadarChartSVG 
                   stats={stats} 
-                  size={isSquare ? 280 : 220}
+                  size={isSquare ? 260 : 180}
                 />
               </div>
             </div>
