@@ -528,15 +528,15 @@ export const seedService = {
               return { success: true };
             }
 
-            // JSON型フィールドを適切に処理
-            // GraphQL JSON型は文字列化されたJSONを期待する場合がある
+            // JSON型フィールドはそのままオブジェクトとして渡す
+            // Amplify Gen2のa.json()は自動的にJSONとして処理する
             const jobData = {
               ...job,
               requirements: job.requirements && Object.keys(job.requirements).length > 0 
-                ? JSON.stringify(job.requirements)
+                ? job.requirements
                 : null,
               statBonuses: job.statBonuses && Object.keys(job.statBonuses).length > 0 
-                ? JSON.stringify(job.statBonuses)
+                ? job.statBonuses
                 : null,
             };
 

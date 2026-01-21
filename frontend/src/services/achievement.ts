@@ -267,7 +267,7 @@ export const achievementService = {
       }
 
       // 解放条件をチェック
-      // requirementsがJSON文字列の場合はパースする
+      // requirementsがJSON文字列の場合はパースする（二重エンコード対応）
       let requirements: {
         level?: number;
         stats?: Record<string, number>;
@@ -275,16 +275,25 @@ export const achievementService = {
         achievements?: string[];
       } | undefined;
       
-      if (typeof job.requirements === 'string') {
+      let parsed: unknown = job.requirements;
+      // 文字列の場合はパース
+      if (typeof parsed === 'string') {
         try {
-          requirements = JSON.parse(job.requirements);
+          parsed = JSON.parse(parsed);
         } catch {
           console.error(`Failed to parse job requirements for ${job.jobId}:`, job.requirements);
-          requirements = undefined;
+          parsed = undefined;
         }
-      } else {
-        requirements = job.requirements as typeof requirements;
       }
+      // 二重エンコードの場合、もう一度パース
+      if (typeof parsed === 'string') {
+        try {
+          parsed = JSON.parse(parsed);
+        } catch {
+          parsed = undefined;
+        }
+      }
+      requirements = parsed as typeof requirements;
 
       // 要件がない、または空オブジェクトの場合
       const hasRequirements = requirements && (

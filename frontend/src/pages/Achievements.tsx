@@ -114,18 +114,28 @@ export function Achievements() {
     const userJob = userJobs.find(uj => uj.jobId === job.jobId);
     
     // 要件のJSON形式を解析して日本語化
-    // requirementsがJSON文字列の場合はパースする
+    // requirementsがJSON文字列の場合はパースする（二重エンコード対応）
     let reqs: Record<string, unknown> = {};
     if (job.requirements) {
-      if (typeof job.requirements === 'string') {
+      let parsed = job.requirements;
+      // 文字列の場合はパース
+      if (typeof parsed === 'string') {
         try {
-          reqs = JSON.parse(job.requirements);
+          parsed = JSON.parse(parsed);
         } catch {
           console.error(`Failed to parse job requirements for ${job.jobId}`);
+          parsed = {};
         }
-      } else {
-        reqs = job.requirements as Record<string, unknown>;
       }
+      // 二重エンコードの場合、もう一度パース
+      if (typeof parsed === 'string') {
+        try {
+          parsed = JSON.parse(parsed);
+        } catch {
+          parsed = {};
+        }
+      }
+      reqs = (parsed as Record<string, unknown>) ?? {};
     }
 
     let unlockCondition = 'じょうけんをみたすとかいほう';
