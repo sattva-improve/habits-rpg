@@ -3,6 +3,12 @@ import { Trophy, Crown, Lock, Check, Loader2, Sword, User } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
 import type { Gender } from '@/types';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { ImageWithFallback } from '@/components/common';
 
 export function Achievements() {
   const { 
@@ -244,75 +250,69 @@ export function Achievements() {
             データをよみこみちゅう...さいしょのログインじにマスターデータがとうにゅうされます
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-4 gap-2">
             {displayAchievements.map((achievement) => (
-              <div
-                key={achievement.id}
-                className={`relative overflow-hidden rounded-lg border-2 p-4 transition-all ${
-                  achievement.isUnlocked
-                    ? 'bg-gradient-to-br from-amber-950/60 to-amber-900/60 border-amber-600/50 hover:border-amber-500 hover:shadow-lg hover:shadow-amber-900/30'
-                    : 'bg-slate-900/40 border-slate-700/50 opacity-60'
-                }`}
-              >
-                {/* Icon */}
-                <div className="relative mb-4">
+              <Tooltip key={achievement.id}>
+                <TooltipTrigger asChild>
                   <div
-                    className={`w-full aspect-square rounded-lg flex items-center justify-center border-2 ${
+                    className={`relative overflow-hidden rounded-lg border-2 p-2 transition-all cursor-pointer ${
                       achievement.isUnlocked
-                        ? 'bg-gradient-to-br from-amber-600 to-amber-800 border-amber-500/50'
-                        : 'bg-slate-800/60 border-slate-700/50'
+                        ? 'bg-gradient-to-br from-amber-950/60 to-amber-900/60 border-amber-600/50 hover:border-amber-500 hover:shadow-lg hover:shadow-amber-900/30'
+                        : 'bg-slate-900/40 border-slate-700/50 opacity-60'
                     }`}
                   >
-                    {/* Pixel grid effect */}
-                    <div className="absolute inset-0 bg-[linear-gradient(transparent_3px,rgba(0,0,0,0.1)_3px),linear-gradient(to_right,transparent_3px,rgba(0,0,0,0.1)_3px)] bg-[length:8px_8px] rounded-lg"></div>
-                    
-                    {achievement.isUnlocked ? (
-                      <span className="text-5xl relative z-10">{achievement.iconType}</span>
-                    ) : (
-                      <Lock className="w-16 h-16 text-slate-500 relative z-10" />
-                    )}
-                  </div>
+                    {/* Icon */}
+                    <div className="relative">
+                      <div
+                        className={`w-full aspect-square rounded-lg flex items-center justify-center border-2 ${
+                          achievement.isUnlocked
+                            ? 'bg-gradient-to-br from-amber-600 to-amber-800 border-amber-500/50'
+                            : 'bg-slate-800/60 border-slate-700/50'
+                        }`}
+                      >
+                        {/* Pixel grid effect */}
+                        <div className="absolute inset-0 bg-[linear-gradient(transparent_3px,rgba(0,0,0,0.1)_3px),linear-gradient(to_right,transparent_3px,rgba(0,0,0,0.1)_3px)] bg-[length:8px_8px] rounded-lg"></div>
+                        
+                        {achievement.isUnlocked ? (
+                          <span className="text-2xl md:text-4xl relative z-10">{achievement.iconType}</span>
+                        ) : (
+                          <Lock className="w-6 h-6 md:w-10 md:h-10 text-slate-500 relative z-10" />
+                        )}
+                      </div>
 
-                  {/* Unlocked Badge */}
-                  {achievement.isUnlocked && (
-                    <div className="absolute -top-2 -right-2 bg-green-600 border-2 border-green-400 rounded-full p-1">
-                      <Check className="w-4 h-4 text-white" />
+                      {/* Unlocked Badge */}
+                      {achievement.isUnlocked && (
+                        <div className="absolute -top-1 -right-1 bg-green-600 border border-green-400 rounded-full p-0.5">
+                          <Check className="w-2 h-2 md:w-3 md:h-3 text-white" />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
 
-                {/* Content */}
-                <div className="space-y-2">
-                  <h3
-                    className={`font-bold ${
-                      achievement.isUnlocked ? 'text-amber-200' : 'text-slate-400'
-                    }`}
-                  >
-                    {achievement.title}
-                  </h3>
-                  <p
-                    className={`text-sm ${
-                      achievement.isUnlocked ? 'text-amber-300/70' : 'text-slate-500'
-                    }`}
-                  >
-                    {achievement.description}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <div
-                      className={`text-xs font-semibold px-2 py-1 rounded border inline-block ${
-                        achievement.isUnlocked
-                          ? 'bg-amber-950/40 text-amber-400 border-amber-700/50'
-                          : 'bg-slate-800/40 text-slate-500 border-slate-700/50'
-                      }`}
-                    >
-                      {achievement.unlockCondition}
+                    {/* Title (compact) */}
+                    <div className="mt-1">
+                      <h3
+                        className={`font-bold text-[10px] md:text-xs truncate ${
+                          achievement.isUnlocked ? 'text-amber-200' : 'text-slate-400'
+                        }`}
+                      >
+                        {achievement.title}
+                      </h3>
                     </div>
-                    <span className="text-xs text-yellow-400">
-                      +{achievement.expReward} EXP
-                    </span>
                   </div>
-                </div>
-              </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs bg-slate-900 border border-amber-600/50 p-3">
+                  <div className="space-y-2">
+                    <h4 className="font-bold text-amber-200">{achievement.title}</h4>
+                    <p className="text-sm text-amber-300/80">{achievement.description}</p>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-amber-400 bg-amber-950/40 px-2 py-1 rounded border border-amber-700/50">
+                        {achievement.unlockCondition}
+                      </span>
+                      <span className="text-yellow-400">+{achievement.expReward} EXP</span>
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             ))}
           </div>
         )}
@@ -330,95 +330,111 @@ export function Achievements() {
             職業はまだありません
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {displayJobs.map((job) => (
-              <div
-                key={job.id}
-                className={`relative overflow-hidden rounded-lg border-2 p-4 transition-all ${
-                  job.isUnlocked
-                    ? 'bg-gradient-to-br from-purple-950/60 to-purple-900/60 border-purple-600/50 hover:border-purple-500 hover:shadow-lg hover:shadow-purple-900/30'
-                    : 'bg-slate-900/40 border-slate-700/50 opacity-60'
-                }`}
-              >
-                {/* Icon */}
-                <div className="relative mb-4">
-                  <div
-                    className={`w-full aspect-square rounded-lg flex items-center justify-center border-2 ${
-                      job.isUnlocked
-                        ? 'bg-gradient-to-br from-purple-600 to-purple-800 border-purple-500/50'
-                        : 'bg-slate-800/60 border-slate-700/50'
-                    }`}
-                  >
-                    {/* Pixel grid effect */}
-                    <div className="absolute inset-0 bg-[linear-gradient(transparent_3px,rgba(0,0,0,0.1)_3px),linear-gradient(to_right,transparent_3px,rgba(0,0,0,0.1)_3px)] bg-[length:8px_8px] rounded-lg"></div>
-                    
-                    {job.isUnlocked ? (
-                      <span className="text-5xl relative z-10">{job.iconType}</span>
-                    ) : (
-                      <Lock className="w-16 h-16 text-slate-500 relative z-10" />
-                    )}
-                  </div>
-
-                  {/* Unlocked/Equipped Badge */}
-                  {job.isUnlocked && (
-                    <div className={`absolute -top-2 -right-2 ${job.isEquipped ? 'bg-yellow-600 border-yellow-400' : 'bg-green-600 border-green-400'} border-2 rounded-full p-1`}>
-                      <Check className="w-4 h-4 text-white" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h3
-                      className={`font-bold ${
-                        job.isUnlocked ? 'text-purple-200' : 'text-slate-400'
-                      }`}
-                    >
-                      {job.title}
-                    </h3>
-                    {job.isEquipped && (
-                      <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded">
-                        そうびちゅう
-                      </span>
-                    )}
-                  </div>
-                  <p
-                    className={`text-sm ${
-                      job.isUnlocked ? 'text-purple-300/70' : 'text-slate-500'
-                    }`}
-                  >
-                    {job.description}
-                  </p>
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="grid grid-cols-4 gap-2">
+            {displayJobs.map((job) => {
+              // ジョブのスプライト画像パスを生成
+              const gender = userData?.gender || 'male';
+              const jobSpritePath = `/sprites/${gender}/${job.id}.png`;
+              const fallbackSpritePath = `/sprites/${gender}/beginner.png`;
+              
+              return (
+                <Tooltip key={job.id}>
+                  <TooltipTrigger asChild>
                     <div
-                      className={`text-xs font-semibold px-2 py-1 rounded border inline-block ${
+                      className={`relative overflow-hidden rounded-lg border-2 p-2 transition-all cursor-pointer ${
                         job.isUnlocked
-                          ? 'bg-purple-950/40 text-purple-400 border-purple-700/50'
-                          : 'bg-slate-800/40 text-slate-500 border-slate-700/50'
+                          ? 'bg-gradient-to-br from-purple-950/60 to-purple-900/60 border-purple-600/50 hover:border-purple-500 hover:shadow-lg hover:shadow-purple-900/30'
+                          : 'bg-slate-900/40 border-slate-700/50 opacity-60'
                       }`}
                     >
-                      {job.unlockCondition}
-                    </div>
-                    {/* 職業選択ボタン */}
-                    {job.isUnlocked && !job.isEquipped && (
-                      <button
-                        onClick={() => handleSelectJob(job.id, job.title)}
-                        disabled={isSelectingJob !== null}
-                        className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded border bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isSelectingJob === job.id ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <Sword className="w-3 h-3" />
+                      {/* Icon */}
+                      <div className="relative">
+                        <div
+                          className={`w-full aspect-square rounded-lg flex items-center justify-center border-2 overflow-hidden ${
+                            job.isUnlocked
+                              ? 'bg-gradient-to-br from-purple-600 to-purple-800 border-purple-500/50'
+                              : 'bg-slate-800/60 border-slate-700/50'
+                          }`}
+                        >
+                          {/* Pixel grid effect */}
+                          <div className="absolute inset-0 bg-[linear-gradient(transparent_3px,rgba(0,0,0,0.1)_3px),linear-gradient(to_right,transparent_3px,rgba(0,0,0,0.1)_3px)] bg-[length:8px_8px] rounded-lg z-10"></div>
+                          
+                          {job.isUnlocked ? (
+                            <ImageWithFallback
+                              src={jobSpritePath}
+                              fallbackSrc={fallbackSpritePath}
+                              alt={job.title}
+                              className="w-full h-full object-contain [image-rendering:pixelated]"
+                            />
+                          ) : (
+                            <Lock className="w-6 h-6 md:w-10 md:h-10 text-slate-500 relative z-10" />
+                          )}
+                        </div>
+
+                        {/* Unlocked/Equipped Badge */}
+                        {job.isUnlocked && (
+                          <div className={`absolute -top-1 -right-1 ${job.isEquipped ? 'bg-yellow-600 border-yellow-400' : 'bg-green-600 border-green-400'} border rounded-full p-0.5`}>
+                            <Check className="w-2 h-2 md:w-3 md:h-3 text-white" />
+                          </div>
                         )}
-                        <span>そうびする</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+                      </div>
+
+                      {/* Title (compact) */}
+                      <div className="mt-1">
+                        <h3
+                          className={`font-bold text-[10px] md:text-xs truncate ${
+                            job.isUnlocked ? 'text-purple-200' : 'text-slate-400'
+                          }`}
+                        >
+                          {job.title}
+                        </h3>
+                        {job.isEquipped && (
+                          <span className="text-[8px] md:text-[10px] bg-yellow-600 text-white px-1 rounded">
+                            そうび
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs bg-slate-900 border border-purple-600/50 p-3">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-purple-200">{job.title}</h4>
+                        {job.isEquipped && (
+                          <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded">
+                            そうびちゅう
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-purple-300/80">{job.description}</p>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-xs text-purple-400 bg-purple-950/40 px-2 py-1 rounded border border-purple-700/50">
+                          {job.unlockCondition}
+                        </span>
+                        {/* 職業選択ボタン */}
+                        {job.isUnlocked && !job.isEquipped && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectJob(job.id, job.title);
+                            }}
+                            disabled={isSelectingJob !== null}
+                            className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded border bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isSelectingJob === job.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Sword className="w-3 h-3" />
+                            )}
+                            <span>そうびする</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
           </div>
         )}
       </div>
