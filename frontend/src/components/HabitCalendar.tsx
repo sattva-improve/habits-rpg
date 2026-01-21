@@ -34,6 +34,14 @@ interface HabitCalendarProps {
   onHabitSelect?: (habitId: string | undefined) => void;
 }
 
+// ローカル日付をYYYY-MM-DD形式で取得（タイムゾーンを考慮）
+const formatDateToLocal = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // 曜日の表示名
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -142,7 +150,7 @@ export function HabitCalendar({ selectedHabitId, onHabitSelect }: HabitCalendarP
   const getStatusColor = (date: Date, isCurrentMonth: boolean): string => {
     if (!isCurrentMonth) return 'bg-slate-800/30';
     
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatDateToLocal(date);
     const status = dayStatusMap.get(dateStr);
     
     if (!status || status.completedHabits.length === 0) {
@@ -171,7 +179,7 @@ export function HabitCalendar({ selectedHabitId, onHabitSelect }: HabitCalendarP
     const checkDate = new Date(today);
     
     while (true) {
-      const dateStr = checkDate.toISOString().split('T')[0];
+      const dateStr = formatDateToLocal(checkDate);
       const status = dayStatusMap.get(dateStr);
       
       // その日に全ての習慣を達成したかチェック
@@ -205,7 +213,7 @@ export function HabitCalendar({ selectedHabitId, onHabitSelect }: HabitCalendarP
     
     const current = new Date(firstDay);
     while (current <= lastDay) {
-      const dateStr = current.toISOString().split('T')[0];
+      const dateStr = formatDateToLocal(current);
       
       // 未来の日付はスキップ
       if (dateStr <= today) {
@@ -240,7 +248,7 @@ export function HabitCalendar({ selectedHabitId, onHabitSelect }: HabitCalendarP
 
   // 日付をクリック
   const handleDayClick = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatDateToLocal(date);
     const status = dayStatusMap.get(dateStr) || {
       date: dateStr,
       completedHabits: [],
@@ -378,7 +386,7 @@ export function HabitCalendar({ selectedHabitId, onHabitSelect }: HabitCalendarP
 
         {/* 日付セル */}
         {calendarDays.map(({ date, isCurrentMonth }, index) => {
-          const dateStr = date.toISOString().split('T')[0];
+          const dateStr = formatDateToLocal(date);
           const isToday = dateStr === today;
           const dayOfWeek = date.getDay();
           
