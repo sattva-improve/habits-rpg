@@ -4,10 +4,10 @@ import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
 import type { Gender } from '@/types';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ImageWithFallback } from '@/components/common';
 
 export function Achievements() {
@@ -114,28 +114,18 @@ export function Achievements() {
     const userJob = userJobs.find(uj => uj.jobId === job.jobId);
     
     // 要件のJSON形式を解析して日本語化
-    // requirementsがJSON文字列の場合はパースする（二重エンコード対応）
+    // requirementsがJSON文字列の場合はパースする
     let reqs: Record<string, unknown> = {};
     if (job.requirements) {
-      let parsed = job.requirements;
-      // 文字列の場合はパース
-      if (typeof parsed === 'string') {
+      if (typeof job.requirements === 'string') {
         try {
-          parsed = JSON.parse(parsed);
+          reqs = JSON.parse(job.requirements);
         } catch {
           console.error(`Failed to parse job requirements for ${job.jobId}`);
-          parsed = {};
         }
+      } else {
+        reqs = job.requirements as Record<string, unknown>;
       }
-      // 二重エンコードの場合、もう一度パース
-      if (typeof parsed === 'string') {
-        try {
-          parsed = JSON.parse(parsed);
-        } catch {
-          parsed = {};
-        }
-      }
-      reqs = (parsed as Record<string, unknown>) ?? {};
     }
 
     let unlockCondition = 'じょうけんをみたすとかいほう';
@@ -262,8 +252,8 @@ export function Achievements() {
         ) : (
           <div className="grid grid-cols-4 gap-2">
             {displayAchievements.map((achievement) => (
-              <Tooltip key={achievement.id}>
-                <TooltipTrigger asChild>
+              <Popover key={achievement.id}>
+                <PopoverTrigger asChild>
                   <div
                     className={`relative overflow-hidden rounded-lg border-2 p-2 transition-all cursor-pointer ${
                       achievement.isUnlocked
@@ -309,8 +299,8 @@ export function Achievements() {
                       </h3>
                     </div>
                   </div>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs bg-slate-900 border border-amber-600/50 p-3">
+                </PopoverTrigger>
+                <PopoverContent className="w-64 bg-slate-900 border border-amber-600/50 p-3">
                   <div className="space-y-2">
                     <h4 className="font-bold text-amber-200">{achievement.title}</h4>
                     <p className="text-sm text-amber-300/80">{achievement.description}</p>
@@ -320,9 +310,12 @@ export function Achievements() {
                       </span>
                       <span className="text-yellow-400">+{achievement.expReward} EXP</span>
                     </div>
+                    {!achievement.isUnlocked && (
+                      <p className="text-xs text-slate-400 mt-2">※ まだ解放されていません</p>
+                    )}
                   </div>
-                </TooltipContent>
-              </Tooltip>
+                </PopoverContent>
+              </Popover>
             ))}
           </div>
         )}
@@ -348,8 +341,8 @@ export function Achievements() {
               const fallbackSpritePath = `/sprites/${gender}/beginner.png`;
               
               return (
-                <Tooltip key={job.id}>
-                  <TooltipTrigger asChild>
+                <Popover key={job.id}>
+                  <PopoverTrigger asChild>
                     <div
                       className={`relative overflow-hidden rounded-lg border-2 p-2 transition-all cursor-pointer ${
                         job.isUnlocked
@@ -405,8 +398,8 @@ export function Achievements() {
                         )}
                       </div>
                     </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs bg-slate-900 border border-purple-600/50 p-3">
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 bg-slate-900 border border-purple-600/50 p-3">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <h4 className="font-bold text-purple-200">{job.title}</h4>
@@ -417,19 +410,16 @@ export function Achievements() {
                         )}
                       </div>
                       <p className="text-sm text-purple-300/80">{job.description}</p>
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <span className="text-xs text-purple-400 bg-purple-950/40 px-2 py-1 rounded border border-purple-700/50">
+                      <div className="space-y-2">
+                        <span className="text-xs text-purple-400 bg-purple-950/40 px-2 py-1 rounded border border-purple-700/50 inline-block">
                           {job.unlockCondition}
                         </span>
                         {/* 職業選択ボタン */}
                         {job.isUnlocked && !job.isEquipped && (
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSelectJob(job.id, job.title);
-                            }}
+                            onClick={() => handleSelectJob(job.id, job.title)}
                             disabled={isSelectingJob !== null}
-                            className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded border bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full flex items-center justify-center gap-1 text-xs font-semibold px-3 py-2 rounded border bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {isSelectingJob === job.id ? (
                               <Loader2 className="w-3 h-3 animate-spin" />
@@ -439,10 +429,13 @@ export function Achievements() {
                             <span>そうびする</span>
                           </button>
                         )}
+                        {!job.isUnlocked && (
+                          <p className="text-xs text-slate-400">※ まだ解放されていません</p>
+                        )}
                       </div>
                     </div>
-                  </TooltipContent>
-                </Tooltip>
+                  </PopoverContent>
+                </Popover>
               );
             })}
           </div>
