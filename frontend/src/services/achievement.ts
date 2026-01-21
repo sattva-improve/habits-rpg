@@ -294,7 +294,7 @@ export const achievementService = {
         requirements.achievements !== undefined
       );
 
-      if (!hasRequirements) {
+      if (!hasRequirements || !requirements) {
         // 要件がなければ解放可能（beginnerのみ該当）
         // ただし、beginnerは最初から解放済み扱いなのでここに来るのは異常
         console.log(`⚠️ Job ${job.jobId} has no requirements, skipping auto-unlock`);
