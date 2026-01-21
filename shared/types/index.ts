@@ -132,17 +132,34 @@ export interface UserAchievement {
   currentValue: number;
 }
 
-export interface Job {
+/**
+ * ジョブ解放条件
+ */
+export interface JobRequirements {
+  level?: number;
+  stats?: Partial<Record<StatType, number>>;
+  achievements?: string[];
+  jobs?: string[]; // 前提ジョブ
+}
+
+/**
+ * ジョブ定義（マスターデータ）
+ */
+export interface JobDefinition {
   jobId: string;
   name: string;
   description: string;
   icon: string;
   tier: JobTier;
-  requirements?: Record<string, unknown>;
-  statBonuses?: Record<StatType, number>;
+  requirements: JobRequirements;
+  statBonuses: Partial<Record<StatType, number>>;
   expBonus: number;
-  requiredLevel: number;
 }
+
+/**
+ * @deprecated JobDefinition を使用してください
+ */
+export type Job = JobDefinition;
 
 export interface UserJob {
   id: string;

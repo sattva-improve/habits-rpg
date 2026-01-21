@@ -2,10 +2,12 @@
  * 初期データ（シードデータ）
  * 
  * デプロイ後に実行して、アチーブメントとジョブのマスターデータを投入
+ * 
+ * Note: 現在は frontend/src/services/seed.ts でシードデータを管理しています。
+ * このファイルはスプライト定義のリファレンスとして残しています。
  */
 
-import { ACHIEVEMENTS } from '../functions/check-achievements/handler';
-import { JOBS } from '../functions/check-jobs/handler';
+import { JOBS } from '../../shared/constants/jobs';
 
 /**
  * キャラクタースプライトのシードデータ
@@ -256,9 +258,10 @@ export const SEED_SPRITES = [
 
 /**
  * シードデータをエクスポート
+ * 
+ * Note: アチーブメントは frontend/src/services/seed.ts で管理されています。
  */
 export const seedData = {
-  achievements: ACHIEVEMENTS,
   jobs: JOBS,
   sprites: SEED_SPRITES,
 };

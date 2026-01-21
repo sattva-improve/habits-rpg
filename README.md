@@ -23,10 +23,10 @@
 │                     localhost:3001 / Hosting                    │
 ├─────────────────────────────────────────────────────────────────┤
 │                       AWS Amplify Gen2                          │
-├──────────────┬──────────────┬──────────────┬───────────────────┤
-│   Cognito    │   AppSync    │     S3       │     Lambda        │
-│   (認証)     │  (GraphQL)   │ (ストレージ)  │   (Functions)     │
-├──────────────┴──────────────┴──────────────┴───────────────────┤
+├──────────────┬──────────────┬──────────────────────────────────┤
+│   Cognito    │   AppSync    │     S3                           │
+│   (認証)     │  (GraphQL)   │ (ストレージ)                      │
+├──────────────┴──────────────┴──────────────────────────────────┤
 │                        DynamoDB                                 │
 │            (User, Habit, Achievement, Job, etc.)               │
 └─────────────────────────────────────────────────────────────────┘
@@ -40,18 +40,13 @@ Habits-rpg/
 │   ├── auth/                   # 認証設定 (Cognito)
 │   ├── data/                   # データスキーマ (DynamoDB + AppSync)
 │   ├── storage/                # ストレージ設定 (S3)
-│   ├── functions/              # Lambda関数
-│   │   ├── record-habit/       # 習慣記録処理
-│   │   ├── check-achievements/ # 実績判定
-│   │   ├── check-jobs/         # 称号判定
-│   │   └── calculate-stats/    # 統計計算
 │   └── helpers/                # 共通ヘルパー
 ├── frontend/                   # Reactフロントエンド
 │   ├── src/
 │   │   ├── components/         # UIコンポーネント
 │   │   ├── contexts/           # React Context
 │   │   ├── pages/              # ページコンポーネント
-│   │   ├── services/           # APIサービス
+│   │   ├── services/           # APIサービス（習慣記録、実績/称号判定含む）
 │   │   └── lib/                # ユーティリティ
 │   └── public/
 │       └── sprites/            # キャラクタードット絵

@@ -1,28 +1,19 @@
-import type { Handler } from 'aws-lambda';
+/**
+ * ジョブマスターデータ
+ *
+ * すべてのジョブ定義を一元管理
+ * - check-jobs Lambda関数
+ * - seed-data
+ * - フロントエンド
+ * で共有して使用
+ */
+
+import type { JobDefinition } from '../types';
 
 /**
- * ジョブ定義
+ * 全ジョブ定義
  */
-interface JobDefinition {
-  jobId: string;
-  name: string;
-  description: string;
-  icon: string;
-  tier: 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'grandmaster';
-  requirements: {
-    level?: number;
-    stats?: Partial<Record<'VIT' | 'INT' | 'MND' | 'DEX' | 'CHA' | 'STR', number>>;
-    achievements?: string[];
-    jobs?: string[]; // 前提ジョブ
-  };
-  statBonuses: Partial<Record<'VIT' | 'INT' | 'MND' | 'DEX' | 'CHA' | 'STR', number>>;
-  expBonus: number;
-}
-
-/**
- * デフォルトジョブ一覧
- */
-const JOBS: JobDefinition[] = [
+export const JOBS: JobDefinition[] = [
   // ===== Novice (初期) =====
   {
     jobId: 'beginner',
@@ -192,6 +183,50 @@ const JOBS: JobDefinition[] = [
       jobs: ['athlete_apprentice'],
     },
     statBonuses: { VIT: 2, STR: 1 },
+    expBonus: 1.1,
+  },
+
+  // ===== Journeyman (複合ステータス系) =====
+  {
+    jobId: 'ranger',
+    name: 'レンジャー',
+    description: '弓と自然を操る狩人',
+    icon: '🏹',
+    tier: 'journeyman',
+    requirements: {
+      level: 10,
+      stats: { DEX: 4, STR: 3 },
+      jobs: ['warrior_apprentice', 'artisan_apprentice'],
+    },
+    statBonuses: { DEX: 2, STR: 1 },
+    expBonus: 1.1,
+  },
+  {
+    jobId: 'paladin',
+    name: 'パラディン',
+    description: '聖なる力を宿す騎士',
+    icon: '✝️',
+    tier: 'journeyman',
+    requirements: {
+      level: 10,
+      stats: { STR: 4, MND: 3 },
+      jobs: ['warrior_apprentice', 'monk_apprentice'],
+    },
+    statBonuses: { STR: 2, MND: 1 },
+    expBonus: 1.1,
+  },
+  {
+    jobId: 'ninja',
+    name: '忍者',
+    description: '影に潜み、俊敏に動く者',
+    icon: '🥷',
+    tier: 'journeyman',
+    requirements: {
+      level: 10,
+      stats: { DEX: 4, INT: 3 },
+      jobs: ['artisan_apprentice', 'scholar_apprentice'],
+    },
+    statBonuses: { DEX: 2, INT: 1 },
     expBonus: 1.1,
   },
 
@@ -384,105 +419,16 @@ const JOBS: JobDefinition[] = [
   },
 ];
 
-interface CheckJobsInput {
-  userId: string;
-  level: number;
-  stats: {
-    vitality: number;
-    intelligence: number;
-    mental: number;
-    dexterity: number;
-    charisma: number;
-    strength: number;
-  };
-  unlockedJobs: string[];
-  unlockedAchievements: string[];
-}
-
-interface JobUnlock {
-  job: JobDefinition;
-  unlockedAt: string;
-  requirementsMet: Record<string, boolean>;
+/**
+ * ジョブIDからジョブ定義を取得
+ */
+export function getJobById(jobId: string): JobDefinition | undefined {
+  return JOBS.find((job) => job.jobId === jobId);
 }
 
 /**
- * ステータス値を標準形式に変換
+ * ティアでジョブをフィルタ
  */
-function normalizeStats(stats: CheckJobsInput['stats']): Record<string, number> {
-  return {
-    VIT: stats.vitality,
-    INT: stats.intelligence,
-    MND: stats.mental,
-    DEX: stats.dexterity,
-    CHA: stats.charisma,
-    STR: stats.strength,
-  };
+export function getJobsByTier(tier: JobDefinition['tier']): JobDefinition[] {
+  return JOBS.filter((job) => job.tier === tier);
 }
-
-/**
- * ジョブ解放判定を行う
- */
-export const handler: Handler<CheckJobsInput, JobUnlock[]> = async (event) => {
-  const { level, stats, unlockedJobs, unlockedAchievements } = event;
-  const normalizedStats = normalizeStats(stats);
-
-  const newUnlocks: JobUnlock[] = [];
-  const now = new Date().toISOString();
-
-  for (const job of JOBS) {
-    // すでに解除済みの場合はスキップ
-    if (unlockedJobs.includes(job.jobId)) {
-      continue;
-    }
-
-    const requirementsMet: Record<string, boolean> = {};
-    let allMet = true;
-
-    // レベル要件
-    if (job.requirements.level) {
-      const levelMet = level >= job.requirements.level;
-      requirementsMet['level'] = levelMet;
-      if (!levelMet) allMet = false;
-    }
-
-    // ステータス要件
-    if (job.requirements.stats) {
-      for (const [stat, required] of Object.entries(job.requirements.stats)) {
-        const statMet = (normalizedStats[stat] || 0) >= required;
-        requirementsMet[`stat_${stat}`] = statMet;
-        if (!statMet) allMet = false;
-      }
-    }
-
-    // 前提ジョブ要件
-    if (job.requirements.jobs) {
-      for (const reqJob of job.requirements.jobs) {
-        const jobMet = unlockedJobs.includes(reqJob);
-        requirementsMet[`job_${reqJob}`] = jobMet;
-        if (!jobMet) allMet = false;
-      }
-    }
-
-    // アチーブメント要件
-    if (job.requirements.achievements) {
-      for (const reqAchievement of job.requirements.achievements) {
-        const achievementMet = unlockedAchievements.includes(reqAchievement);
-        requirementsMet[`achievement_${reqAchievement}`] = achievementMet;
-        if (!achievementMet) allMet = false;
-      }
-    }
-
-    if (allMet) {
-      newUnlocks.push({
-        job,
-        unlockedAt: now,
-        requirementsMet,
-      });
-    }
-  }
-
-  return newUnlocks;
-};
-
-// ジョブ定義をエクスポート（シード用）
-export { JOBS };

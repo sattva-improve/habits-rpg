@@ -16,11 +16,13 @@
 
 ### 1.1 ジョブ定義の追加
 
-**ファイル**: `amplify/functions/check-jobs/handler.ts`
+**ファイル**: `shared/constants/jobs.ts`
 
 `JOBS` 配列に新しいジョブを追加します。
 
 #### ジョブ定義の構造
+
+型定義は `shared/types/index.ts` にあります：
 
 ```typescript
 interface JobDefinition {

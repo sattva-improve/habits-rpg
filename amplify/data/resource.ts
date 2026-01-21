@@ -49,9 +49,6 @@ const schema = a.schema({
       email: a.email().required(),
       // Profile
       displayName: a.string().required(),
-      avatarUrl: a.string(),
-      avatarKey: a.string(), // S3のキャラクタードット絵のパス
-      bio: a.string(),
       timezone: a.string().default('Asia/Tokyo'),
       gender: a.string().default('male'), // 'male' | 'female'
       // Stats
@@ -101,8 +98,6 @@ const schema = a.schema({
       statType: a.string(), // StatType enum value
       // Frequency
       frequencyType: a.string().default('daily'), // FrequencyType enum value
-      timesPerWeek: a.integer(),
-      specificDays: a.integer().array(), // 0-6 (日-土)
       // Difficulty
       difficulty: a.string().default('normal'), // HabitDifficulty enum value
       // Reminder
@@ -214,42 +209,6 @@ const schema = a.schema({
     })
     .identifier(['id'])
     .secondaryIndexes((index) => [index('userId').queryField('userJobsByUserId')])
-    .authorization((allow) => [allow.ownerDefinedIn('userId').to(['create', 'read', 'update'])]),
-
-  // ===== CharacterSprite Model (ドット絵管理) =====
-  CharacterSprite: a
-    .model({
-      spriteId: a.id().required(),
-      name: a.string().required(),
-      description: a.string(),
-      category: a.string().required(), // 'base', 'outfit', 'accessory', 'effect'
-      // S3パス
-      spriteKey: a.string().required(),
-      thumbnailKey: a.string(),
-      // メタデータ
-      frameCount: a.integer().default(1), // アニメーションフレーム数
-      width: a.integer().required(),
-      height: a.integer().required(),
-      // 取得条件
-      unlockCondition: a.json(), // { level: 10 } or { achievement: 'xxx' }
-      isDefault: a.boolean().default(false),
-    })
-    .identifier(['spriteId'])
-    .authorization((allow) => [allow.authenticated().to(['read'])]),
-
-  // ===== UserSprite Model (ユーザーが所有・使用中のスプライト) =====
-  UserSprite: a
-    .model({
-      id: a.id().required(),
-      userId: a.id().required(),
-      spriteId: a.id().required(),
-      isUnlocked: a.boolean().default(false),
-      isEquipped: a.boolean().default(false),
-      equippedSlot: a.string(), // 'base', 'outfit', 'accessory', etc.
-      unlockedAt: a.datetime(),
-    })
-    .identifier(['id'])
-    .secondaryIndexes((index) => [index('userId').queryField('userSpritesByUserId')])
     .authorization((allow) => [allow.ownerDefinedIn('userId').to(['create', 'read', 'update'])]),
 });
 
