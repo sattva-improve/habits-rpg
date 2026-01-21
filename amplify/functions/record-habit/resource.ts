@@ -22,5 +22,7 @@ export const recordHabitFunction = defineFunction({
     STREAK_14_BONUS: '1.5',
     STREAK_30_BONUS: '2.0',
     STREAK_60_BONUS: '2.5',
+    // ジョブ解放判定Lambda関数名（backend.tsで設定）
+    CHECK_JOBS_FUNCTION_NAME: '',
   },
 });

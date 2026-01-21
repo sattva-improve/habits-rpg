@@ -1,4 +1,5 @@
 import type { AppSyncResolverHandler } from 'aws-lambda';
+import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 
 /**
  * 経験値・レベルシステム
@@ -8,6 +9,9 @@ import type { AppSyncResolverHandler } from 'aws-lambda';
  * - レベルアップ計算: 必要EXP = 15 × (1.02 ^ (level - 1))
  * - カンスト目安: 1日3習慣(Normal)で59日目にLv.99到達
  */
+
+// Lambda クライアント
+const lambdaClient = new LambdaClient({});
 
 interface RecordHabitInput {
   habitId: string;
@@ -240,6 +244,54 @@ export const handler: AppSyncResolverHandler<RecordHabitInput, RecordHabitResult
     newStatLevel,
     statType: habit.statType,
     newAchievements: [], // アチーブメント判定は別途実装
-    newJobs: [], // ジョブ解放判定は別途実装
+    newJobs: await checkJobUnlocks(userId, newLevel),
   };
 };
+
+/**
+ * ジョブ解放判定を実行
+ */
+async function checkJobUnlocks(userId: string, level: number): Promise<any[]> {
+  const checkJobsFunctionName = process.env.CHECK_JOBS_FUNCTION_NAME;
+  
+  if (!checkJobsFunctionName) {
+    console.warn('CHECK_JOBS_FUNCTION_NAME is not set, skipping job unlock check');
+    return [];
+  }
+
+  try {
+    // TODO: 実際にはDBからユーザーのステータス、解放済みジョブ、アチーブメントを取得
+    const checkJobsPayload = {
+      userId,
+      level,
+      stats: {
+        vitality: 10,
+        intelligence: 10,
+        mental: 10,
+        dexterity: 10,
+        charisma: 10,
+        strength: 10,
+      },
+      unlockedJobs: [],
+      unlockedAchievements: [],
+    };
+
+    const command = new InvokeCommand({
+      FunctionName: checkJobsFunctionName,
+      Payload: JSON.stringify(checkJobsPayload),
+    });
+
+    const response = await lambdaClient.send(command);
+    
+    if (response.Payload) {
+      const result = JSON.parse(new TextDecoder().decode(response.Payload));
+      console.log('Job unlock check result:', JSON.stringify(result));
+      return result;
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Failed to check job unlocks:', error);
+    return [];
+  }
+}

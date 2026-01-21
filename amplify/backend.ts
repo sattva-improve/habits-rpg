@@ -1,4 +1,6 @@
 import { defineBackend } from '@aws-amplify/backend';
+import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Function as LambdaFunction } from 'aws-cdk-lib/aws-lambda';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
 import { storage } from './storage/resource';
@@ -31,6 +33,21 @@ const backend = defineBackend({
   checkJobsFunction,
   calculateStatsFunction,
 });
+
+// recordHabitFunctionにcheckJobsFunctionを呼び出す権限を付与
+backend.recordHabitFunction.resources.lambda.addToRolePolicy(
+  new PolicyStatement({
+    actions: ['lambda:InvokeFunction'],
+    resources: [backend.checkJobsFunction.resources.lambda.functionArn],
+  })
+);
+
+// recordHabitFunctionにcheckJobsFunction名を環境変数として設定
+const recordHabitLambda = backend.recordHabitFunction.resources.lambda as LambdaFunction;
+recordHabitLambda.addEnvironment(
+  'CHECK_JOBS_FUNCTION_NAME',
+  backend.checkJobsFunction.resources.lambda.functionName
+);
 
 // カスタムリソースの追加（必要に応じて）
 // const { cfnUserPool } = backend.auth.resources.cfnResources;
