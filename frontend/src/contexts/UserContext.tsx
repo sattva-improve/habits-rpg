@@ -332,12 +332,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
           }
           
           // アチーブメントチェック（称号獲得）
+          // 最新のユーザーデータとアチーブメントを保持する変数
+          let latestUser = updatedUser;
+          let latestUserAchievements = userAchievements;
+
           if (achievements.length > 0) {
             const checkResult = await achievementService.checkAchievements(
-              updatedUser,
+              latestUser,
               updatedHabits,
               achievements,
-              userAchievements
+              latestUserAchievements
             );
 
             // 新しく解除されたアチーブメントがあれば通知
@@ -353,22 +357,41 @@ export function UserProvider({ children }: { children: ReactNode }) {
                   },
                 });
               }
-              // UserAchievementsを再取得
-              const updatedUserAch = await userService.getUserAchievements(user.userId);
-              setUserAchievements(updatedUserAch);
+              // UserAchievementsを再取得して最新状態を保持
+              latestUserAchievements = await userService.getUserAchievements(user.userId);
+              setUserAchievements(latestUserAchievements);
               // 経験値も更新されたので再取得
               const finalUser = await userService.getUser(user.userId);
-              if (finalUser) setUserData(finalUser);
+              if (finalUser) {
+                latestUser = finalUser;
+                setUserData(finalUser);
+              }
             }
           }
 
-          // ジョブ解放チェック
+          // ジョブ解放チェック（最新のユーザーデータとアチーブメントを使用）
           if (jobs.length > 0) {
+            // UserJobsも最新を取得
+            const latestUserJobs = await userService.getUserJobs(user.userId);
+            
+            console.log('🔍 Job unlock check:', {
+              userStats: {
+                VIT: latestUser.vitality,
+                INT: latestUser.intelligence,
+                MND: latestUser.mental,
+                DEX: latestUser.dexterity,
+                CHA: latestUser.charisma,
+                STR: latestUser.strength,
+              },
+              level: latestUser.level,
+              unlockedJobs: latestUserJobs.filter(uj => uj.isUnlocked).map(uj => uj.jobId),
+            });
+
             const jobCheckResult = await achievementService.checkJobs(
-              updatedUser,
+              latestUser,
               jobs,
-              userJobs,
-              userAchievements
+              latestUserJobs,
+              latestUserAchievements
             );
 
             // 新しく解放されたジョブがあれば通知

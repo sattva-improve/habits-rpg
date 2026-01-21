@@ -290,17 +290,21 @@ export const achievementService = {
       }
 
       let allMet = true;
+      const failedRequirements: string[] = [];
 
       // レベル要件
       if (requirements.level && (user.level ?? 1) < requirements.level) {
         allMet = false;
+        failedRequirements.push(`level: need ${requirements.level}, have ${user.level ?? 1}`);
       }
 
       // ステータス要件
       if (requirements.stats && allMet) {
         for (const [stat, required] of Object.entries(requirements.stats)) {
-          if ((userStats[stat] ?? 0) < required) {
+          const currentValue = userStats[stat] ?? 0;
+          if (currentValue < required) {
             allMet = false;
+            failedRequirements.push(`${stat}: need ${required}, have ${currentValue}`);
             break;
           }
         }
@@ -311,6 +315,7 @@ export const achievementService = {
         for (const reqJob of requirements.jobs) {
           if (!unlockedJobIds.has(reqJob)) {
             allMet = false;
+            failedRequirements.push(`job: need ${reqJob}`);
             break;
           }
         }
@@ -321,12 +326,19 @@ export const achievementService = {
         for (const reqAch of requirements.achievements) {
           if (!unlockedAchievementIds.has(reqAch)) {
             allMet = false;
+            failedRequirements.push(`achievement: need ${reqAch}`);
             break;
           }
         }
       }
 
+      // デバッグログ
+      if (!allMet) {
+        console.log(`🔒 Job ${job.jobId} (${job.name}) not met:`, failedRequirements.join(', '));
+      }
+
       if (allMet) {
+        console.log(`🔓 Job ${job.jobId} (${job.name}) requirements met! Unlocking...`);
         const unlocked = await this.unlockJob(user.userId, job.jobId);
         if (unlocked) {
           newlyUnlocked.push(job);
