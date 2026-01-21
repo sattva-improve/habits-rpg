@@ -10,6 +10,171 @@ function getExpForLevel(level: number): number {
   return LEVEL_THRESHOLDS[level - 1];
 }
 
+// SVGベースのレーダーチャートコンポーネント（html2canvas対応）
+interface RadarChartSVGProps {
+  stats: { stat: string; value: number }[];
+  size?: number;
+  maxValue?: number;
+}
+
+function RadarChartSVG({ stats, size = 200, maxValue }: RadarChartSVGProps) {
+  const center = size / 2;
+  const radius = size * 0.4;
+  const numAxes = stats.length;
+  
+  // 最大値を動的に計算
+  const maxStatValue = Math.max(...stats.map(s => s.value));
+  const chartMax = maxValue || (maxStatValue <= 10 ? 10 : Math.ceil(maxStatValue / 10) * 10);
+
+  // 軸の角度を計算（上から始めて時計回り）
+  const getAngle = (index: number) => {
+    return (index * 2 * Math.PI) / numAxes - Math.PI / 2;
+  };
+
+  // 座標を計算
+  const getPoint = (index: number, value: number) => {
+    const angle = getAngle(index);
+    const normalizedValue = Math.min(value / chartMax, 1);
+    return {
+      x: center + radius * normalizedValue * Math.cos(angle),
+      y: center + radius * normalizedValue * Math.sin(angle),
+    };
+  };
+
+  // グリッドラインのポイントを生成
+  const getGridPoints = (level: number) => {
+    return stats.map((_, index) => {
+      const point = getPoint(index, chartMax * level);
+      return `${point.x},${point.y}`;
+    }).join(' ');
+  };
+
+  // データポイントのパスを生成
+  const dataPath = stats.map((stat, index) => {
+    const point = getPoint(index, stat.value);
+    return `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`;
+  }).join(' ') + ' Z';
+
+  // ラベル位置を計算
+  const getLabelPosition = (index: number) => {
+    const angle = getAngle(index);
+    const labelRadius = radius + 30;
+    return {
+      x: center + labelRadius * Math.cos(angle),
+      y: center + labelRadius * Math.sin(angle),
+    };
+  };
+
+  // 値の位置を計算
+  const getValuePosition = (index: number, value: number) => {
+    const angle = getAngle(index);
+    const normalizedValue = Math.min(value / chartMax, 1);
+    const valueRadius = radius * normalizedValue + 15;
+    return {
+      x: center + valueRadius * Math.cos(angle),
+      y: center + valueRadius * Math.sin(angle),
+    };
+  };
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {/* 背景円 */}
+      <circle cx={center} cy={center} r={radius} fill="rgba(15, 23, 42, 0.6)" />
+      
+      {/* グリッドライン */}
+      {[0.25, 0.5, 0.75, 1].map((level) => (
+        <polygon
+          key={level}
+          points={getGridPoints(level)}
+          fill="none"
+          stroke="rgba(120, 113, 108, 0.3)"
+          strokeWidth="1"
+        />
+      ))}
+
+      {/* 軸線 */}
+      {stats.map((_, index) => {
+        const point = getPoint(index, chartMax);
+        return (
+          <line
+            key={index}
+            x1={center}
+            y1={center}
+            x2={point.x}
+            y2={point.y}
+            stroke="rgba(120, 113, 108, 0.3)"
+            strokeWidth="1"
+          />
+        );
+      })}
+
+      {/* データエリア */}
+      <path
+        d={dataPath}
+        fill="rgba(245, 158, 11, 0.5)"
+        stroke="#f59e0b"
+        strokeWidth="2"
+      />
+
+      {/* データポイント */}
+      {stats.map((stat, index) => {
+        const point = getPoint(index, stat.value);
+        return (
+          <circle
+            key={index}
+            cx={point.x}
+            cy={point.y}
+            r="4"
+            fill="#fbbf24"
+            stroke="#d97706"
+            strokeWidth="1"
+          />
+        );
+      })}
+
+      {/* ラベル */}
+      {stats.map((stat, index) => {
+        const pos = getLabelPosition(index);
+        return (
+          <text
+            key={index}
+            x={pos.x}
+            y={pos.y}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill="#fbbf24"
+            fontSize="12"
+            fontWeight="bold"
+            fontFamily="sans-serif"
+          >
+            {stat.stat}
+          </text>
+        );
+      })}
+
+      {/* 値 */}
+      {stats.map((stat, index) => {
+        const pos = getValuePosition(index, stat.value);
+        return (
+          <text
+            key={`value-${index}`}
+            x={pos.x}
+            y={pos.y}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill="#fff"
+            fontSize="10"
+            fontWeight="bold"
+            fontFamily="sans-serif"
+          >
+            {stat.value}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
 export interface ShareableCardProps {
   width?: number;
   height?: number;
@@ -386,20 +551,24 @@ export const ShareableCard = forwardRef<HTMLDivElement, ShareableCardProps>(
               )}
             </div>
 
-            {/* ステータス一覧 */}
+            {/* ステータス（レーダーチャート） */}
             <div
               style={{
                 background: 'rgba(30, 41, 59, 0.8)',
                 border: '2px solid rgba(217, 119, 6, 0.5)',
                 borderRadius: 12,
                 padding: 20,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                flex: 1,
               }}
             >
               <div
                 style={{
                   color: '#fbbf24',
                   fontWeight: 'bold',
-                  marginBottom: 16,
+                  marginBottom: 8,
                   fontSize: 18,
                 }}
               >
@@ -407,29 +576,16 @@ export const ShareableCard = forwardRef<HTMLDivElement, ShareableCardProps>(
               </div>
               <div
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: isSquare ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)',
-                  gap: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flex: 1,
                 }}
               >
-                {stats.map((stat, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      background: 'rgba(15, 23, 42, 0.5)',
-                      borderRadius: 8,
-                      padding: '10px 14px',
-                    }}
-                  >
-                    <span style={{ color: '#94a3b8', fontSize: 14 }}>{stat.stat}</span>
-                    <span style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: 18 }}>
-                      {stat.value}
-                    </span>
-                  </div>
-                ))}
+                <RadarChartSVG 
+                  stats={stats} 
+                  size={isSquare ? 280 : 220}
+                />
               </div>
             </div>
           </div>
