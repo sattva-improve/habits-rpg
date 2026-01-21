@@ -267,12 +267,24 @@ export const achievementService = {
       }
 
       // 解放条件をチェック
-      const requirements = job.requirements as {
+      // requirementsがJSON文字列の場合はパースする
+      let requirements: {
         level?: number;
         stats?: Record<string, number>;
         jobs?: string[];
         achievements?: string[];
       } | undefined;
+      
+      if (typeof job.requirements === 'string') {
+        try {
+          requirements = JSON.parse(job.requirements);
+        } catch {
+          console.error(`Failed to parse job requirements for ${job.jobId}:`, job.requirements);
+          requirements = undefined;
+        }
+      } else {
+        requirements = job.requirements as typeof requirements;
+      }
 
       // 要件がない、または空オブジェクトの場合
       const hasRequirements = requirements && (

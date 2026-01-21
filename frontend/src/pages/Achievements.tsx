@@ -108,32 +108,61 @@ export function Achievements() {
     const userJob = userJobs.find(uj => uj.jobId === job.jobId);
     
     // 要件のJSON形式を解析して日本語化
-    let unlockCondition = 'じょうけんをみたすとかいほう';
+    // requirementsがJSON文字列の場合はパースする
+    let reqs: Record<string, unknown> = {};
     if (job.requirements) {
-      const reqs = job.requirements as Record<string, unknown>;
-      const conditions: string[] = [];
-      
-      if (reqs.level) {
-        conditions.push(`Lv.${reqs.level}`);
-      }
-      
-      if (reqs.stats) {
-        const statNames: Record<string, string> = {
-          VIT: 'たいりょく',
-          INT: 'かしこさ',
-          MND: 'せいしん',
-          DEX: 'きようさ',
-          CHA: 'みりょく',
-          STR: 'ちから',
-        };
-        const statReqs = reqs.stats as Record<string, number>;
-        for (const [stat, value] of Object.entries(statReqs)) {
-          conditions.push(`${statNames[stat] ?? stat} ${value}`);
+      if (typeof job.requirements === 'string') {
+        try {
+          reqs = JSON.parse(job.requirements);
+        } catch {
+          console.error(`Failed to parse job requirements for ${job.jobId}`);
         }
+      } else {
+        reqs = job.requirements as Record<string, unknown>;
       }
-      
-      unlockCondition = conditions.length > 0 ? conditions.join(', ') : unlockCondition;
     }
+
+    let unlockCondition = 'じょうけんをみたすとかいほう';
+    const conditions: string[] = [];
+    
+    if (reqs.level) {
+      conditions.push(`Lv.${reqs.level}`);
+    }
+    
+    if (reqs.stats) {
+      const statNames: Record<string, string> = {
+        VIT: 'たいりょく',
+        INT: 'かしこさ',
+        MND: 'せいしん',
+        DEX: 'きようさ',
+        CHA: 'みりょく',
+        STR: 'ちから',
+      };
+      const statReqs = reqs.stats as Record<string, number>;
+      for (const [stat, value] of Object.entries(statReqs)) {
+        conditions.push(`${statNames[stat] ?? stat} ${value}`);
+      }
+    }
+    
+    // 前提ジョブ要件を追加
+    if (reqs.jobs && Array.isArray(reqs.jobs)) {
+      const jobNames = (reqs.jobs as string[]).map(jobId => {
+        const prerequisiteJob = jobs.find(j => j.jobId === jobId);
+        return prerequisiteJob ? prerequisiteJob.name : jobId;
+      });
+      conditions.push(`しょくぎょう: ${jobNames.join(', ')}`);
+    }
+    
+    // アチーブメント要件を追加
+    if (reqs.achievements && Array.isArray(reqs.achievements)) {
+      const achievementNames = (reqs.achievements as string[]).map(achId => {
+        const prerequisiteAch = achievements.find(a => a.achievementId === achId);
+        return prerequisiteAch ? prerequisiteAch.name : achId;
+      });
+      conditions.push(`しょうごう: ${achievementNames.join(', ')}`);
+    }
+    
+    unlockCondition = conditions.length > 0 ? conditions.join(', ') : unlockCondition;
     
     return {
       id: job.jobId,
