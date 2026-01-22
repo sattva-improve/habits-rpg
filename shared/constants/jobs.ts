@@ -229,6 +229,48 @@ export const JOBS: JobDefinition[] = [
     statBonuses: { DEX: 2, INT: 1 },
     expBonus: 1.1,
   },
+  {
+    jobId: 'spellblade',
+    name: '魔法剣士',
+    description: '剣と魔法を融合させた戦士',
+    icon: '⚔️✨',
+    tier: 'journeyman',
+    requirements: {
+      level: 10,
+      stats: { STR: 4, INT: 3 },
+      jobs: ['warrior_apprentice', 'scholar_apprentice'],
+    },
+    statBonuses: { STR: 1, INT: 1, DEX: 1 },
+    expBonus: 1.1,
+  },
+  {
+    jobId: 'dancer',
+    name: '踊り子',
+    description: '優雅な舞で仲間を鼓舞する者',
+    icon: '💃',
+    tier: 'journeyman',
+    requirements: {
+      level: 10,
+      stats: { CHA: 4, VIT: 3 },
+      jobs: ['performer_apprentice', 'athlete_apprentice'],
+    },
+    statBonuses: { CHA: 1, VIT: 1, DEX: 1 },
+    expBonus: 1.1,
+  },
+  {
+    jobId: 'alchemist',
+    name: '錬金術師',
+    description: '物質を変容させる秘術の使い手',
+    icon: '⚗️',
+    tier: 'journeyman',
+    requirements: {
+      level: 10,
+      stats: { INT: 4, DEX: 3 },
+      jobs: ['scholar_apprentice', 'artisan_apprentice'],
+    },
+    statBonuses: { INT: 1, DEX: 1, MND: 1 },
+    expBonus: 1.1,
+  },
 
   // ===== Expert (熟練者) =====
   {

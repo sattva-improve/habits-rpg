@@ -105,6 +105,17 @@ rembgでキャラクターの一部が透過されないよう、以下のプロ
 | bard | 4等身 | bard outfit, lute, musical instrument, skilled performer |
 | athlete | 4等身 | athletic clothes, gold medal, champion, elite athlete |
 
+### 複合ステータス系（4等身スタンダード）
+
+| ジョブ | 等身 | プロンプト（ジョブ部分） |
+|--------|------|------------------------|
+| ranger | 4等身 | ranger outfit, bow, quiver, forest hunter, nature explorer |
+| paladin | 4等身 | holy knight armor, sword, shield, golden aura, sacred warrior |
+| ninja | 4等身 | ninja outfit, dark clothes, kunai, mask, stealthy assassin |
+| spellblade | 4等身 | knight, glowing sword, magic aura, enchanted blade, spellcaster warrior |
+| dancer | 4等身 | dancer, elegant pose, flowing clothes, ribbon, graceful performer |
+| alchemist | 4等身 | alchemist, robe, potions, flask, mysterious bubbling liquid, wizard |
+
 ## 生成手順
 
 ### 1. txt2img APIでの生成（PowerShell例）
