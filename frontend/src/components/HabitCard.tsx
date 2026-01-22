@@ -1,5 +1,7 @@
-import { Check, Flame, Loader2, Trash2 } from 'lucide-react';
+import { Check, Flame, Loader2, Trash2, Pencil } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/constants';
 
 interface HabitDisplayData {
   id: string;
@@ -22,6 +24,7 @@ interface HabitCardProps {
 }
 
 export function HabitCard({ habit, onToggle, onDelete }: HabitCardProps) {
+  const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
@@ -42,6 +45,10 @@ export function HabitCard({ habit, onToggle, onDelete }: HabitCardProps) {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
     }
+  };
+
+  const handleEdit = () => {
+    navigate(`${ROUTES.EDIT_QUEST}/${habit.id}`);
   };
 
   return (
@@ -135,6 +142,17 @@ export function HabitCard({ habit, onToggle, onDelete }: HabitCardProps) {
       <div className={`flex-shrink-0 px-3 py-1 rounded border text-xs font-medium ${statusColor}`}>
         {habit.completed ? 'たっせい！' : habit.isLoading ? 'しょりちゅう...' : habit.status}
       </div>
+
+      {/* Edit Button */}
+      {!habit.completed && !habit.isLoading && (
+        <button
+          onClick={handleEdit}
+          className="flex-shrink-0 p-2 text-amber-400/60 hover:text-amber-400 hover:bg-amber-950/30 rounded transition-all"
+          title="習慣を編集"
+        >
+          <Pencil className="w-4 h-4" />
+        </button>
+      )}
 
       {/* Delete Button */}
       {onDelete && !habit.completed && !habit.isLoading && (

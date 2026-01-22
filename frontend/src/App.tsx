@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Layout } from './layouts';
 import { Dashboard } from './pages/Dashboard';
 import { CreateHabit } from './pages/CreateHabit';
+import { EditHabit } from './pages/EditHabit';
 import { Achievements } from './pages/Achievements';
 import { AuthPage } from './pages/Auth';
 import { ProfileSetupPage } from './pages/ProfileSetup';
@@ -34,6 +35,7 @@ export default function App() {
                     <Routes>
                       <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
                       <Route path={ROUTES.CREATE_QUEST} element={<CreateHabit />} />
+                      <Route path={`${ROUTES.EDIT_QUEST}/:habitId`} element={<EditHabit />} />
                       <Route path={ROUTES.ACHIEVEMENTS} element={<Achievements />} />
                     </Routes>
                   </Layout>

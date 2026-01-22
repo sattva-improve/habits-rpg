@@ -10,6 +10,7 @@ export const ROUTES = {
   HOME: '/',
   DASHBOARD: '/',
   CREATE_QUEST: '/create-quest',
+  EDIT_QUEST: '/edit-quest',
   ACHIEVEMENTS: '/achievements',
   PROFILE: '/profile',
   SETTINGS: '/settings',
