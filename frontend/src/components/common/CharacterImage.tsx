@@ -114,6 +114,13 @@ export const CHARACTER_IMAGE_PATHS = {
     artisan: '/sprites/male/artisan.png',
     bard: '/sprites/male/bard.png',
     athlete: '/sprites/male/athlete.png',
+    // Journeyman (複合ステータス系)
+    ranger: '/sprites/male/ranger.png',
+    paladin: '/sprites/male/paladin.png',
+    ninja: '/sprites/male/ninja.png',
+    spellblade: '/sprites/male/spellblade.png',
+    dancer: '/sprites/male/dancer.png',
+    alchemist: '/sprites/male/alchemist.png',
     // Expert (熟練者)
     knight: '/sprites/male/knight.png',
     sage: '/sprites/male/sage.png',
@@ -151,6 +158,13 @@ export const CHARACTER_IMAGE_PATHS = {
     artisan: '/sprites/female/artisan.png',
     bard: '/sprites/female/bard.png',
     athlete: '/sprites/female/athlete.png',
+    // Journeyman (複合ステータス系)
+    ranger: '/sprites/female/ranger.png',
+    paladin: '/sprites/female/paladin.png',
+    ninja: '/sprites/female/ninja.png',
+    spellblade: '/sprites/female/spellblade.png',
+    dancer: '/sprites/female/dancer.png',
+    alchemist: '/sprites/female/alchemist.png',
     // Expert (熟練者)
     knight: '/sprites/female/knight.png',
     sage: '/sprites/female/sage.png',
