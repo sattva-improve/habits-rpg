@@ -130,14 +130,14 @@ jobs:
           AMPLIFY_BACKEND_ID: ${{ secrets.AMPLIFY_BACKEND_ID }}
           AWS_REGION: ${{ env.AWS_REGION }}
         run: |
-          node scripts/seed-achievements.js
+          node scripts/seed-achievements.cjs
 
       - name: Refresh Job seed data
         env:
           AMPLIFY_BACKEND_ID: ${{ secrets.AMPLIFY_BACKEND_ID }}
           AWS_REGION: ${{ env.AWS_REGION }}
         run: |
-          node scripts/seed-jobs.js
+          node scripts/seed-jobs.cjs
 
       - name: Verify seed data
         run: |

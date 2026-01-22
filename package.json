@@ -9,6 +9,7 @@
     "deploy": "npx ampx pipeline-deploy"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.0.0",
     "aws-amplify": "^6.0.0",
     "ulid": "^2.3.0"
   },
