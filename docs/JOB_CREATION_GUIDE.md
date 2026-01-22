@@ -160,6 +160,48 @@ cp "/mnt/c/Users/konis/Pictures/sd-outputs/[jobId]_male.png" frontend/public/spr
 cp "/mnt/c/Users/konis/Pictures/sd-outputs/[jobId]_female.png" frontend/public/sprites/female/[jobId].png
 \`\`\`
 
+### 2.6 フロントエンドのパスマッピング追加
+
+**⚠️ 重要**: この手順を忘れると、ジョブ変更時にキャラクター画像が更新されません。
+
+**ファイル**: `frontend/src/components/common/CharacterImage.tsx`
+
+`CHARACTER_IMAGE_PATHS` オブジェクトに新しいジョブのパスマッピングを追加します。
+
+\`\`\`typescript
+export const CHARACTER_IMAGE_PATHS = {
+  male: {
+    // ... 既存のジョブ ...
+    // 新しいジョブを追加（適切なティアのコメント下に配置）
+    [jobId]: '/sprites/male/[jobId].png',
+  },
+  female: {
+    // ... 既存のジョブ ...
+    [jobId]: '/sprites/female/[jobId].png',
+  },
+} as const;
+\`\`\`
+
+#### 配置場所の目安
+
+ティアごとにコメントで区分けされています：
+
+- `// Novice` - 初期ジョブ
+- `// Apprentice (見習い)` - 見習い系
+- `// Journeyman (職人)` - 単一ステータス系
+- `// Journeyman (複合ステータス系)` - 複合ステータス系
+- `// Expert (熟練者)` - 熟練者
+- `// Master (達人)` - 達人
+- `// Grandmaster (極致)` - 最上位
+
+#### フォールバック設定
+
+専用画像がまだ存在しない上位ジョブは、下位ジョブの画像をフォールバックとして設定できます：
+
+\`\`\`typescript
+master_artisan: '/sprites/male/artisan.png', // フォールバック
+\`\`\`
+
 ---
 
 ## ステップ3: デプロイ
@@ -199,7 +241,8 @@ GitHub Actionsが以下を自動実行します：
 1. \`shared/constants/jobs.ts\` の \`JOBS\` 配列にジョブ定義追加
 2. Stable Diffusion API呼び出し（男性・女性各1枚、**白背景付き**）
 3. 画像を \`frontend/public/sprites/male/\` と \`female/\` に配置
-4. \`git add\`, \`git commit\`, \`git push\`
+4. \`frontend/src/components/common/CharacterImage.tsx\` の \`CHARACTER_IMAGE_PATHS\` にパスマッピング追加
+5. \`git add\`, \`git commit\`, \`git push\`
 
 ### ジョブ別プロンプトキーワード例
 
@@ -248,6 +291,7 @@ GitHub Actionsが以下を自動実行します：
 - [ ] 男女両方の画像を生成（**白背景付き**）
 - [ ] ファイル名が \`[jobId].png\` と一致
 - [ ] \`shared/constants/jobs.ts\` に定義が追加されていること
+- [ ] \`frontend/src/components/common/CharacterImage.tsx\` の \`CHARACTER_IMAGE_PATHS\` にパスマッピングが追加されていること
 
 ---
 
