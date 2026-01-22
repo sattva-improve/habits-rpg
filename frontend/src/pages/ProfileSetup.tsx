@@ -14,6 +14,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { userService } from '@/services';
 import { fetchUserAttributes } from 'aws-amplify/auth';
+import type { Gender } from '@/types';
+
+const GENDER_OPTIONS: { value: Gender; label: string; emoji: string }[] = [
+  { value: 'male', label: '男性', emoji: '👨' },
+  { value: 'female', label: '女性', emoji: '👩' },
+  { value: 'cat', label: 'ねこ', emoji: '🐱' },
+];
 
 export function ProfileSetupPage() {
   const navigate = useNavigate();
@@ -21,6 +28,7 @@ export function ProfileSetupPage() {
   const { refreshUserData } = useUser();
   
   const [displayName, setDisplayName] = useState('');
+  const [gender, setGender] = useState<Gender>('male');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,6 +71,7 @@ export function ProfileSetupPage() {
         // 既存ユーザーの場合は更新
         await userService.updateUser(user.userId, {
           displayName: displayName.trim(),
+          gender,
         });
       } else {
         // 新規ユーザーの場合は作成
@@ -70,6 +79,7 @@ export function ProfileSetupPage() {
           userId: user.userId,
           email,
           displayName: displayName.trim(),
+          gender,
         });
       }
 
@@ -118,6 +128,27 @@ export function ProfileSetupPage() {
                 autoFocus
               />
               <p className="text-xs text-slate-500">2〜20文字で入力してください</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-200">キャラクタータイプ</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {GENDER_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setGender(option.value)}
+                    className={`p-3 rounded-lg border-2 transition-all ${
+                      gender === option.value
+                        ? 'border-amber-500 bg-amber-500/20 text-amber-400'
+                        : 'border-slate-600 bg-slate-700 text-slate-300 hover:border-slate-500'
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">{option.emoji}</div>
+                    <div className="text-sm font-medium">{option.label}</div>
+                  </button>
+                ))}
+              </div>
             </div>
             
             <Button 

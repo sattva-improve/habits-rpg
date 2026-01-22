@@ -35,6 +35,7 @@
 |------|-----------|-----------------|
 | 男性 | `1 boy` | `1 girl` |
 | 女性 | `1 girl` | `1 boy` |
+| ねこ | `1 cat, anthropomorphic cat, cat ears, cat tail, furry` | `human, boy, girl` |
 
 ### ネガティブプロンプト（共通）
 
@@ -74,6 +75,11 @@ worst quality, bad quality, low quality, displeasing, very displeasing, bad anat
 <lora:Dungeon_Squad_IllustriousV5:1> pixel art, chibi, 3head tall, super deformed, cute proportions, grassland background, village entrance, full body, standing, front view, 1 girl, simple clothes, adventurer, traveler, young beginner, backpack, no mouth, brown hair
 ```
 
+**ねこプロンプト:**
+```
+<lora:Dungeon_Squad_IllustriousV5:1> pixel art, chibi, 3head tall, super deformed, cute proportions, grassland background, village entrance, full body, standing, front view, 1 cat, anthropomorphic cat, cat ears, cat tail, furry, cute cat adventurer, simple clothes, backpack, no mouth
+```
+
 ---
 
 ### Apprentice（見習い）
@@ -95,6 +101,11 @@ worst quality, bad quality, low quality, displeasing, very displeasing, bad anat
 <lora:Dungeon_Squad_IllustriousV5:1> pixel art, chibi, 3head tall, super deformed, cute proportions, training ground background, castle wall, full body, standing, front view, 1 girl, light armor, training sword, apprentice warrior, young trainee, no mouth, brown hair
 ```
 
+**ねこプロンプト:**
+```
+<lora:Dungeon_Squad_IllustriousV5:1> pixel art, chibi, 3head tall, super deformed, cute proportions, training ground background, castle wall, full body, standing, front view, 1 cat, anthropomorphic cat, cat ears, cat tail, furry, light armor, training sword, apprentice warrior cat, no mouth
+```
+
 ---
 
 #### scholar_apprentice - 見習い学者
@@ -112,6 +123,11 @@ worst quality, bad quality, low quality, displeasing, very displeasing, bad anat
 **女性プロンプト:**
 ```
 <lora:Dungeon_Squad_IllustriousV5:1> pixel art, chibi, 3head tall, super deformed, cute proportions, library background, bookshelf, full body, standing, front view, 1 girl, apprentice robe, book, studying, young student, glasses, no mouth, brown hair
+```
+
+**ねこプロンプト:**
+```
+<lora:Dungeon_Squad_IllustriousV5:1> pixel art, chibi, 3head tall, super deformed, cute proportions, library background, bookshelf, full body, standing, front view, 1 cat, anthropomorphic cat, cat ears, cat tail, furry, apprentice robe, book, studying, scholar cat, glasses, no mouth
 ```
 
 ---
@@ -133,6 +149,11 @@ worst quality, bad quality, low quality, displeasing, very displeasing, bad anat
 <lora:Dungeon_Squad_IllustriousV5:1> pixel art, chibi, 3head tall, super deformed, cute proportions, temple background, zen garden, full body, standing, front view, 1 girl, simple monk robe, prayer beads, young disciple, peaceful, no mouth, brown hair
 ```
 
+**ねこプロンプト:**
+```
+<lora:Dungeon_Squad_IllustriousV5:1> pixel art, chibi, 3head tall, super deformed, cute proportions, temple background, zen garden, full body, standing, front view, 1 cat, anthropomorphic cat, cat ears, cat tail, furry, simple monk robe, prayer beads, monk cat, peaceful, no mouth
+```
+
 ---
 
 #### artisan_apprentice - 見習い職人
@@ -150,6 +171,11 @@ worst quality, bad quality, low quality, displeasing, very displeasing, bad anat
 **女性プロンプト:**
 ```
 <lora:Dungeon_Squad_IllustriousV5:1> pixel art, chibi, 3head tall, super deformed, cute proportions, workshop background, workbench, full body, standing, front view, 1 girl, apron, small hammer, crafting tools, young craftsman, no mouth, brown hair
+```
+
+**ねこプロンプト:**
+```
+<lora:Dungeon_Squad_IllustriousV5:1> pixel art, chibi, 3head tall, super deformed, cute proportions, workshop background, workbench, full body, standing, front view, 1 cat, anthropomorphic cat, cat ears, cat tail, furry, apron, small hammer, crafting tools, artisan cat, no mouth
 ```
 
 ---
@@ -171,6 +197,11 @@ worst quality, bad quality, low quality, displeasing, very displeasing, bad anat
 <lora:Dungeon_Squad_IllustriousV5:1> pixel art, chibi, 3head tall, super deformed, cute proportions, town square background, small stage, full body, standing, front view, 1 girl, colorful clothes, tambourine, young entertainer, cheerful, no mouth, brown hair
 ```
 
+**ねこプロンプト:**
+```
+<lora:Dungeon_Squad_IllustriousV5:1> pixel art, chibi, 3head tall, super deformed, cute proportions, town square background, small stage, full body, standing, front view, 1 cat, anthropomorphic cat, cat ears, cat tail, furry, colorful clothes, tambourine, performer cat, cheerful, no mouth
+```
+
 ---
 
 #### athlete_apprentice - 見習いアスリート
@@ -188,6 +219,11 @@ worst quality, bad quality, low quality, displeasing, very displeasing, bad anat
 **女性プロンプト:**
 ```
 <lora:Dungeon_Squad_IllustriousV5:1> pixel art, chibi, 3head tall, super deformed, cute proportions, arena background, training field, full body, standing, front view, 1 girl, sports clothes, athletic, training, young athlete, energetic, no mouth, brown hair
+```
+
+**ねこプロンプト:**
+```
+<lora:Dungeon_Squad_IllustriousV5:1> pixel art, chibi, 3head tall, super deformed, cute proportions, arena background, training field, full body, standing, front view, 1 cat, anthropomorphic cat, cat ears, cat tail, furry, sports clothes, athletic, athlete cat, energetic, no mouth
 ```
 
 ---

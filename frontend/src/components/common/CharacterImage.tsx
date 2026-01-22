@@ -185,9 +185,53 @@ export const CHARACTER_IMAGE_PATHS = {
     mage: '/sprites/female/mage.png',
     default: '/sprites/female/beginner.png',
   },
+  cat: {
+    // Novice
+    beginner: '/sprites/cat/beginner.png',
+    // Apprentice (見習い)
+    warrior_apprentice: '/sprites/cat/warrior_apprentice.png',
+    scholar_apprentice: '/sprites/cat/scholar_apprentice.png',
+    monk_apprentice: '/sprites/cat/monk_apprentice.png',
+    artisan_apprentice: '/sprites/cat/artisan_apprentice.png',
+    performer_apprentice: '/sprites/cat/performer_apprentice.png',
+    athlete_apprentice: '/sprites/cat/athlete_apprentice.png',
+    // Journeyman (職人)
+    warrior: '/sprites/cat/warrior.png',
+    scholar: '/sprites/cat/scholar.png',
+    monk: '/sprites/cat/monk.png',
+    artisan: '/sprites/cat/artisan.png',
+    bard: '/sprites/cat/bard.png',
+    athlete: '/sprites/cat/athlete.png',
+    // Journeyman (複合ステータス系)
+    ranger: '/sprites/cat/ranger.png',
+    paladin: '/sprites/cat/paladin.png',
+    ninja: '/sprites/cat/ninja.png',
+    spellblade: '/sprites/cat/spellblade.png',
+    dancer: '/sprites/cat/dancer.png',
+    alchemist: '/sprites/cat/alchemist.png',
+    // Expert (熟練者)
+    knight: '/sprites/cat/knight.png',
+    sage: '/sprites/cat/sage.png',
+    high_monk: '/sprites/cat/beginner.png', // フォールバック
+    master_artisan: '/sprites/cat/beginner.png', // フォールバック
+    virtuoso: '/sprites/cat/beginner.png', // フォールバック
+    champion: '/sprites/cat/beginner.png', // フォールバック
+    // Master (達人)
+    hero: '/sprites/cat/beginner.png', // フォールバック
+    arch_sage: '/sprites/cat/beginner.png', // フォールバック
+    enlightened: '/sprites/cat/beginner.png', // フォールバック
+    legend_artisan: '/sprites/cat/beginner.png', // フォールバック
+    superstar: '/sprites/cat/beginner.png', // フォールバック
+    olympian: '/sprites/cat/beginner.png', // フォールバック
+    // Grandmaster (極致)
+    habit_master: '/sprites/cat/beginner.png', // フォールバック
+    // Legacy
+    mage: '/sprites/cat/beginner.png',
+    default: '/sprites/cat/beginner.png',
+  },
 } as const;
 
-export type Gender = 'male' | 'female';
+export type Gender = 'male' | 'female' | 'cat';
 
 /**
  * ジョブIDと性別に対応する画像パスを取得

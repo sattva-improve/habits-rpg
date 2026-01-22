@@ -40,7 +40,7 @@ export type AchievementRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legen
 
 export type JobTier = 'novice' | 'apprentice' | 'journeyman' | 'expert' | 'master' | 'grandmaster';
 
-export type Gender = 'male' | 'female';
+export type Gender = 'male' | 'female' | 'cat';
 
 // ===== Interfaces =====
 

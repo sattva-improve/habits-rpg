@@ -50,7 +50,7 @@ const schema = a.schema({
       // Profile
       displayName: a.string().required(),
       timezone: a.string().default('Asia/Tokyo'),
-      gender: a.string().default('male'), // 'male' | 'female'
+      gender: a.string().default('male'), // 'male' | 'female' | 'cat'
       // Stats
       vitality: a.integer().default(1),
       vitalityExp: a.integer().default(0),
