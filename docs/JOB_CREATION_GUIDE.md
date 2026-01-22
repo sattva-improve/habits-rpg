@@ -87,35 +87,22 @@ interface JobDefinition {
 
 ### 2.1 前提条件
 
-- Stable Diffusion WebUIが起動していること（\`--api\` フラグ付き）
-- URL: \`http://127.0.0.1:7860\`
-- LoRA: \`Dungeon_Squad_IllustriousV5\` がインストール済み
+- Stable Diffusion WebUIが起動していること（`--api` フラグ付き）
+- URL: `http://127.0.0.1:7860`
+- LoRA: `Dungeon_Squad_IllustriousV5` がインストール済み
 
-### 2.2 プロンプトの作成
+### 2.2 プロンプトの取得
 
-**重要**: すべての画像は**白背景付き**で生成します。背景透過処理は行いません。
+> **📝 完全なプロンプト**: 各ジョブの完全なプロンプトは [PROMPTS.md](PROMPTS.md) を参照してください。
 
-#### テンプレート（等身別）
+**重要**: すべての画像は**キャラクターに適した背景付き**で生成します。背景透過処理は行いません。
 
-**3等身（ちびキャラ）- beginner, apprentice系**:
-\`\`\`
-<lora:Dungeon_Squad_IllustriousV5:1> pixel art, chibi, 3head tall, super deformed, cute proportions, simple background, white background, full body, standing, front view, [gender], [job description], no mouth, brown hair
-\`\`\`
+#### 等身設定
 
-**4等身（スタンダード）- journeyman以上**:
-\`\`\`
-<lora:Dungeon_Squad_IllustriousV5:1> pixel art, 4head tall, standard proportions, simple background, white background, full body, standing, front view, [gender], [job description], no mouth, brown hair
-\`\`\`
-
-#### 性別
-- 男性: \`1 boy\`
-- 女性: \`1 girl\`
-
-#### ネガティブプロンプト
-
-\`\`\`
-worst quality, bad quality, low quality, displeasing, very displeasing, bad anatomy, bad hands, scan artifacts, monochrome, castle, building, landscape, [除外性別]
-\`\`\`
+| カテゴリ | 等身 |
+|---------|------|
+| novice, apprentice | 3等身（chibi） |
+| journeyman以上 | 4等身（standard） |
 
 ### 2.3 生成パラメータ
 
@@ -130,11 +117,11 @@ worst quality, bad quality, low quality, displeasing, very displeasing, bad anat
 
 ### 2.4 API呼び出し（PowerShell）
 
-\`\`\`powershell
-# 男性画像
-\$body = @{
-    prompt = "<lora:Dungeon_Squad_IllustriousV5:1> pixel art, 4head tall, standard proportions, simple background, white background, full body, standing, front view, 1 boy, [job description], no mouth, brown hair"
-    negative_prompt = "worst quality, bad quality, low quality, displeasing, very displeasing, bad anatomy, bad hands, scan artifacts, monochrome, castle, building, landscape, 1 girl"
+```powershell
+# PROMPTS.md から該当ジョブのプロンプトをコピーして使用
+$body = @{
+    prompt = "[PROMPTS.mdからコピーしたプロンプト]"
+    negative_prompt = "worst quality, bad quality, low quality, displeasing, very displeasing, bad anatomy, bad hands, scan artifacts, monochrome, 1 girl"
     width = 768
     height = 768
     cfg_scale = 7
@@ -145,11 +132,11 @@ worst quality, bad quality, low quality, displeasing, very displeasing, bad anat
     }
 } | ConvertTo-Json -Depth 10
 
-\$response = Invoke-RestMethod -Uri "http://127.0.0.1:7860/sdapi/v1/txt2img" -Method Post -Body \$body -ContentType "application/json" -TimeoutSec 300
-[IO.File]::WriteAllBytes("C:\Users\konis\Pictures\sd-outputs\[jobId]_male.png", [Convert]::FromBase64String(\$response.images[0]))
+$response = Invoke-RestMethod -Uri "http://127.0.0.1:7860/sdapi/v1/txt2img" -Method Post -Body $body -ContentType "application/json" -TimeoutSec 300
+[IO.File]::WriteAllBytes("C:\Users\konis\Pictures\sd-outputs\[jobId]_male.png", [Convert]::FromBase64String($response.images[0]))
 
-# 女性画像（prompt/negative_promptの性別部分を入れ替え）
-\`\`\`
+# 女性画像（PROMPTS.mdの女性用プロンプトを使用、negative_promptの性別も入れ替え）
+```
 
 ### 2.5 配置
 
@@ -238,27 +225,23 @@ GitHub Actionsが以下を自動実行します：
 
 ### 必要な操作一覧
 
-1. \`shared/constants/jobs.ts\` の \`JOBS\` 配列にジョブ定義追加
-2. Stable Diffusion API呼び出し（男性・女性各1枚、**白背景付き**）
-3. 画像を \`frontend/public/sprites/male/\` と \`female/\` に配置
-4. \`frontend/src/components/common/CharacterImage.tsx\` の \`CHARACTER_IMAGE_PATHS\` にパスマッピング追加
-5. \`git add\`, \`git commit\`, \`git push\`
+1. `shared/constants/jobs.ts` の `JOBS` 配列にジョブ定義追加
+2. [PROMPTS.md](PROMPTS.md) からプロンプトを取得し、Stable Diffusion API呼び出し（男性・女性各1枚）
+3. 画像を `frontend/public/sprites/male/` と `female/` に配置
+4. `frontend/src/components/common/CharacterImage.tsx` の `CHARACTER_IMAGE_PATHS` にパスマッピング追加
+5. `git add`, `git commit`, `git push`
 
-### ジョブ別プロンプトキーワード例
+### ジョブ別プロンプト
 
-| ジョブカテゴリ | キーワード例 |
-|--------------|-------------|
-| 戦闘系 | armor, sword, shield, knight, warrior, battle |
-| 魔法系 | robe, staff, spellbook, wizard, mage, magic |
-| 信仰系 | monk robe, prayer beads, zen, meditation |
-| 技術系 | apron, hammer, tools, crafting, blacksmith |
-| 芸能系 | colorful clothes, lute, musical instrument, bard |
-| 体術系 | athletic clothes, sports, training, martial arts |
-| 隠密系 | ninja, shadow, stealth, assassin, hood |
-| 自然系 | ranger, bow, forest, hunter, druid |
-| 魔法戦士系 | knight, glowing sword, magic aura, enchanted blade |
-| 踊り子系 | dancer, elegant pose, flowing clothes, ribbon |
-| 錬金術系 | alchemist, robe, potions, flask, bubbling liquid |
+> **📝 完全なプロンプト集**: [PROMPTS.md](PROMPTS.md) を参照
+
+プロンプトにはキャラクターに適した背景が含まれています：
+- 戦士系: 戦場、城門
+- 魔法系: 魔法の塔、図書館
+- 僧侶系: 寺院、山
+- 職人系: 鍛冶場、工房
+- 芸人系: 酒場、ステージ
+- アスリート系: コロシアム、競技場
 
 ### 現在の全ジョブ一覧
 
@@ -288,7 +271,8 @@ GitHub Actionsが以下を自動実行します：
 
 - [ ] \`jobId\` がユニークであること
 - [ ] \`tier\` に応じた適切な \`requirements\` と \`statBonuses\`
-- [ ] 男女両方の画像を生成（**白背景付き**）
+- [ ] ジョブに適した背景が設定されていること
+- [ ] 男女両方の画像を生成
 - [ ] ファイル名が \`[jobId].png\` と一致
 - [ ] \`shared/constants/jobs.ts\` に定義が追加されていること
 - [ ] \`frontend/src/components/common/CharacterImage.tsx\` の \`CHARACTER_IMAGE_PATHS\` にパスマッピングが追加されていること
@@ -321,6 +305,7 @@ Invoke-RestMethod ... -TimeoutSec 600
 
 ## 関連ドキュメント
 
+- [PROMPTS.md](PROMPTS.md) - **全ジョブのプロンプト集（メイン参照先）**
 - [IMAGE_GENERATION.md](IMAGE_GENERATION.md) - 画像生成の詳細設定
 - [DEPLOY.md](DEPLOY.md) - デプロイ手順の詳細
 - [JOBS.md](JOBS.md) - ジョブシステムの設計詳細
