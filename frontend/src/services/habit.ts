@@ -6,14 +6,6 @@
 import { client } from './graphql';
 import type { Habit, HabitRecord, User } from '../types';
 
-// 難易度ボーナス倍率
-const DIFFICULTY_MULTIPLIERS: Record<string, number> = {
-  easy: 0.5,
-  normal: 1.0,
-  hard: 1.5,
-  very_hard: 2.0,
-};
-
 // ストリークボーナス閾値と倍率
 const STREAK_BONUSES = [
   { threshold: 60, multiplier: 2.5 },
@@ -71,13 +63,12 @@ function getStreakMultiplier(streak: number): number {
 }
 
 /**
- * 獲得経験値を計算
+ * 獲得経験値を計算（難易度は固定：normal相当）
  */
-function calculateExp(difficulty: string, streak: number): number {
+function calculateExp(streak: number): number {
   const baseExp = 15;
-  const difficultyMultiplier = DIFFICULTY_MULTIPLIERS[difficulty] || 1.0;
   const streakMultiplier = getStreakMultiplier(streak);
-  return Math.floor(baseExp * difficultyMultiplier * streakMultiplier);
+  return Math.floor(baseExp * streakMultiplier);
 }
 
 /**
@@ -321,8 +312,8 @@ export const habitService = {
       
       const newBestStreak = Math.max(newStreak, habit.bestStreak);
 
-      // 4. 経験値計算
-      const expGained = calculateExp(habit.difficulty, newStreak);
+      // 4. 経験値計算（難易度は固定: normal相当）
+      const expGained = calculateExp(newStreak);
 
       // 5. 記録を作成
       const { data: recordData, errors: recordErrors } = await client.models.HabitRecord.create({

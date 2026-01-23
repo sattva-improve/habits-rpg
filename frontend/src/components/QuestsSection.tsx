@@ -4,7 +4,6 @@ import { Scroll, PlusCircle, Loader2 } from 'lucide-react';
 import { HabitCard } from './HabitCard';
 import { useUser } from '@/contexts/UserContext';
 import { useSound } from '@/hooks';
-import { DIFFICULTY_CONFIG } from '@/constants/game';
 import type { Habit } from '@/types';
 
 export function QuestsSection() {
@@ -37,12 +36,8 @@ export function QuestsSection() {
     await deleteHabit(habitId);
   };
 
-  // 難易度からEXP報酬を計算
-  const getExpReward = (difficulty: string): number => {
-    const config = DIFFICULTY_CONFIG[difficulty as keyof typeof DIFFICULTY_CONFIG];
-    if (!config) return 15;
-    return Math.floor(15 * config.expMultiplier);
-  };
+  // EXP報酬を取得（難易度は固定: normal相当）
+  const BASE_EXP = 15;
 
   // 習慣のステータスを取得
   const getHabitStatus = (habit: Habit): string => {
@@ -87,7 +82,7 @@ export function QuestsSection() {
     name: habit.name,
     category: habit.category ?? 'other',
     categoryIcon: getCategoryIcon(habit.category),
-    expReward: getExpReward(habit.difficulty),
+    expReward: BASE_EXP,
     status: getHabitStatus(habit),
     completed: isHabitCompletedToday(habit.habitId),
     isLoading: completingHabit === habit.habitId,

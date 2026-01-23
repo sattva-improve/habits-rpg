@@ -2,7 +2,7 @@
  * ゲーム関連の定数
  */
 
-import type { StatType, HabitDifficulty, AchievementRarity } from '../types';
+import type { StatType, AchievementRarity } from '../types';
 
 // ステータスの色とラベル
 export const STAT_CONFIG: Record<
@@ -39,17 +39,6 @@ export const STAT_CONFIG: Record<
     label: '筋力',
     description: 'ワークアウト・スポーツに関連',
   },
-};
-
-// 難易度の設定
-export const DIFFICULTY_CONFIG: Record<
-  HabitDifficulty,
-  { label: string; expMultiplier: number; color: string }
-> = {
-  easy: { label: 'かんたん', expMultiplier: 0.5, color: '#22c55e' },
-  normal: { label: 'ふつう', expMultiplier: 1.0, color: '#3b82f6' },
-  hard: { label: 'むずかしい', expMultiplier: 1.5, color: '#f59e0b' },
-  very_hard: { label: '超むずかしい', expMultiplier: 2.0, color: '#ef4444' },
 };
 
 // レアリティの設定

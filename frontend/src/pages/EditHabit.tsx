@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Scroll, Sparkles, Save, X, Loader2 } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
-import type { HabitCategory, HabitDifficulty, FrequencyType, StatType } from '@/types';
+import type { HabitCategory, FrequencyType, StatType } from '@/types';
 
 // カテゴリー設定
 const CATEGORIES: Array<{ value: HabitCategory; label: string; icon: string; defaultStatType: StatType }> = [
@@ -41,14 +41,6 @@ const COLORS = [
   { name: 'pink', class: 'bg-pink-500', hex: '#ec4899' },
 ];
 
-// 難易度
-const DIFFICULTIES: Array<{ value: HabitDifficulty; label: string; exp: string; color: string }> = [
-  { value: 'easy', label: 'かんたん', exp: '+5', color: 'text-green-400' },
-  { value: 'normal', label: 'ふつう', exp: '+10', color: 'text-blue-400' },
-  { value: 'hard', label: 'むずかしい', exp: '+15', color: 'text-orange-400' },
-  { value: 'very_hard', label: 'とてもむずかしい', exp: '+20', color: 'text-red-400' },
-];
-
 export function EditHabit() {
   const navigate = useNavigate();
   const { habitId } = useParams<{ habitId: string }>();
@@ -61,7 +53,6 @@ export function EditHabit() {
     description: '',
     category: 'exercise' as HabitCategory,
     statType: 'VIT' as StatType,
-    difficulty: 'normal' as HabitDifficulty,
     frequencyType: 'daily' as FrequencyType,
     icon: '📝',
     color: '#8b5cf6',
@@ -81,7 +72,6 @@ export function EditHabit() {
         description: habit.description ?? '',
         category: (habit.category as HabitCategory) ?? 'exercise',
         statType: (habit.statType as StatType) ?? 'VIT',
-        difficulty: (habit.difficulty as HabitDifficulty) ?? 'normal',
         frequencyType: (habit.frequencyType as FrequencyType) ?? 'daily',
         icon: habit.icon ?? '📝',
         color: habit.color ?? '#8b5cf6',
@@ -124,7 +114,7 @@ export function EditHabit() {
         description: formData.description || undefined,
         category: formData.category,
         statType: formData.statType,
-        difficulty: formData.difficulty,
+        difficulty: 'normal', // 難易度は固定
         frequencyType: formData.frequencyType,
         icon: formData.icon,
         color: formData.color,
@@ -312,33 +302,6 @@ export function EditHabit() {
                 </div>
                 <p className="text-xs text-amber-400/70 mt-3">
                   ※ この習慣を達成すると、選んだパラメータがあがります
-                </p>
-              </div>
-
-              {/* Difficulty */}
-              <div>
-                <label className="block text-base font-bold text-amber-200 mb-3">
-                  ⭐ なんいど
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {DIFFICULTIES.map((diff) => (
-                    <button
-                      key={diff.value}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, difficulty: diff.value })}
-                      className={`px-4 py-4 rounded-xl border-2 transition-all ${
-                        formData.difficulty === diff.value
-                          ? 'border-amber-400 bg-amber-950/70 shadow-lg shadow-amber-500/20 scale-105'
-                          : 'border-amber-900/40 bg-slate-900/60 hover:border-amber-600 hover:bg-slate-800/60'
-                      }`}
-                    >
-                      <div className="text-base font-bold text-amber-100">{diff.label}</div>
-                      <div className={`text-sm font-semibold ${diff.color}`}>{diff.exp}</div>
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-amber-400/70 mt-3">
-                  ※ なんいどがたかいほど、もらえるけいけんちがふえる
                 </p>
               </div>
             </div>
