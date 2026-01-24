@@ -83,6 +83,7 @@ export interface Habit {
   icon: string;
   color: string;
   category?: HabitCategory;
+  groupCategory?: string; // ユーザー定義のグループカテゴリ（デフォルト: '未分類'）
   statType?: StatType;
   frequencyType: FrequencyType;
   timesPerWeek?: number;

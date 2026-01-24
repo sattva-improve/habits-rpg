@@ -95,6 +95,7 @@ const schema = a.schema({
       icon: a.string().default('📝'),
       color: a.string().default('#4CAF50'),
       category: a.string(), // HabitCategory enum value
+      groupCategory: a.string().default('未分類'), // ユーザー定義のグループカテゴリ
       statType: a.string(), // StatType enum value
       // Frequency
       frequencyType: a.string().default('daily'), // FrequencyType enum value

@@ -43,18 +43,26 @@ const COLORS = [
 
 export function CreateHabit() {
   const navigate = useNavigate();
-  const { createHabit, refreshHabits } = useUser();
+  const { createHabit, refreshHabits, habits } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     category: 'exercise' as HabitCategory,
+    groupCategory: '', // ユーザー定義のグループカテゴリ
     statType: 'VIT' as StatType,
     frequencyType: 'daily' as FrequencyType,
     icon: '📝',
     color: '#8b5cf6',
   });
+
+  // 既存のグループカテゴリ一覧を取得
+  const existingGroupCategories = [...new Set(
+    habits
+      .map(h => h.groupCategory)
+      .filter((c): c is string => !!c && c !== '未分類')
+  )].sort();
 
   // カテゴリー変更時にデフォルトのステータスタイプを設定
   const handleCategoryChange = (category: HabitCategory) => {
@@ -81,6 +89,7 @@ export function CreateHabit() {
         name: formData.name,
         description: formData.description || undefined,
         category: formData.category,
+        groupCategory: formData.groupCategory || '未分類',
         statType: formData.statType,
         difficulty: 'normal', // 難易度は固定
         frequencyType: formData.frequencyType,
@@ -150,6 +159,29 @@ export function CreateHabit() {
                   rows={3}
                   placeholder="習慣のせつめい..."
                 />
+              </div>
+
+              {/* Group Category */}
+              <div>
+                <label className="block text-sm font-bold text-amber-200 mb-2">
+                  📁 グループカテゴリ
+                </label>
+                <input
+                  type="text"
+                  list="group-categories"
+                  value={formData.groupCategory}
+                  onChange={(e) => setFormData({ ...formData, groupCategory: e.target.value })}
+                  className="w-full bg-slate-900/60 border border-amber-900/30 rounded px-4 py-2 text-amber-100 placeholder-amber-700/50 focus:outline-none focus:border-amber-600"
+                  placeholder="未分類"
+                />
+                <datalist id="group-categories">
+                  {existingGroupCategories.map((cat) => (
+                    <option key={cat} value={cat} />
+                  ))}
+                </datalist>
+                <p className="text-xs text-amber-400/70 mt-1">
+                  同じグループの習慣がまとめて表示されます
+                </p>
               </div>
 
               {/* Icon & Color Picker */}
