@@ -1,10 +1,31 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Scroll, PlusCircle, Loader2 } from 'lucide-react';
 import { HabitCard } from './HabitCard';
 import { useUser } from '@/contexts/UserContext';
 import { useSound } from '@/hooks';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import type { Habit } from '@/types';
+
+interface HabitDisplayData {
+  id: string;
+  name: string;
+  category: string;
+  groupCategory: string;
+  categoryIcon: string;
+  expReward: number;
+  status: string;
+  completed: boolean;
+  isLoading?: boolean;
+  streak: number;
+  icon?: string;
+  color?: string;
+}
 
 export function QuestsSection() {
   const { habits, isLoading, completeHabit, deleteHabit, isHabitCompletedToday } = useUser();
@@ -77,19 +98,50 @@ export function QuestsSection() {
   }
 
   // 習慣データを表示用に変換
-  const displayHabits = habits.map(habit => ({
-    id: habit.habitId,
-    name: habit.name,
-    category: habit.category ?? 'other',
-    categoryIcon: getCategoryIcon(habit.category),
-    expReward: BASE_EXP,
-    status: getHabitStatus(habit),
-    completed: isHabitCompletedToday(habit.habitId),
-    isLoading: completingHabit === habit.habitId,
-    streak: habit.currentStreak,
-    icon: habit.icon,
-    color: habit.color,
-  }));
+  const displayHabits: HabitDisplayData[] = useMemo(() => 
+    habits.map(habit => ({
+      id: habit.habitId,
+      name: habit.name,
+      category: habit.category ?? 'other',
+      groupCategory: habit.groupCategory ?? '未分類',
+      categoryIcon: getCategoryIcon(habit.category),
+      expReward: BASE_EXP,
+      status: getHabitStatus(habit),
+      completed: isHabitCompletedToday(habit.habitId),
+      isLoading: completingHabit === habit.habitId,
+      streak: habit.currentStreak,
+      icon: habit.icon,
+      color: habit.color,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    })), [habits, completingHabit]);
+
+  // グループカテゴリ別に習慣をグループ化
+  const groupedHabits = useMemo(() => {
+    const groups = new Map<string, HabitDisplayData[]>();
+    
+    for (const habit of displayHabits) {
+      const groupName = habit.groupCategory;
+      if (!groups.has(groupName)) {
+        groups.set(groupName, []);
+      }
+      groups.get(groupName)!.push(habit);
+    }
+    
+    // カテゴリ名でソート（「未分類」は常に最後）
+    const sortedEntries = [...groups.entries()].sort(([a], [b]) => {
+      if (a === '未分類') return 1;
+      if (b === '未分類') return -1;
+      return a.localeCompare(b, 'ja');
+    });
+    
+    return sortedEntries;
+  }, [displayHabits]);
+
+  // 全カテゴリのキーを取得（デフォルトで全展開）
+  const allCategoryKeys = useMemo(() => 
+    groupedHabits.map(([name]) => name), 
+    [groupedHabits]
+  );
 
   const completedCount = displayHabits.filter(h => h.completed).length;
   const totalExpAvailable = displayHabits
@@ -125,16 +177,53 @@ export function QuestsSection() {
         </div>
       ) : (
         <>
-          <div className="space-y-3">
-            {displayHabits.map((habit) => (
-              <HabitCard
-                key={habit.id}
-                habit={habit}
-                onToggle={() => handleToggle(habit.id)}
-                onDelete={() => handleDelete(habit.id)}
-              />
-            ))}
-          </div>
+          <Accordion 
+            type="multiple" 
+            defaultValue={allCategoryKeys}
+            className="space-y-3"
+          >
+            {groupedHabits.map(([groupName, groupHabits]) => {
+              const groupCompletedCount = groupHabits.filter(h => h.completed).length;
+              const groupTotalCount = groupHabits.length;
+              const isAllCompleted = groupCompletedCount === groupTotalCount;
+              
+              return (
+                <AccordionItem 
+                  key={groupName} 
+                  value={groupName}
+                  className="border border-amber-800/30 rounded-lg bg-slate-900/30 overflow-hidden"
+                >
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-slate-800/30 transition-colors">
+                    <div className="flex items-center gap-3 flex-1">
+                      <span className="text-lg">📁</span>
+                      <span className={`font-bold ${isAllCompleted ? 'text-green-400' : 'text-amber-200'}`}>
+                        {groupName}
+                      </span>
+                      <span className={`text-sm px-2 py-0.5 rounded-full ${
+                        isAllCompleted 
+                          ? 'bg-green-900/50 text-green-300' 
+                          : 'bg-amber-900/50 text-amber-300'
+                      }`}>
+                        {groupCompletedCount}/{groupTotalCount}
+                      </span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="space-y-3">
+                      {groupHabits.map((habit) => (
+                        <HabitCard
+                          key={habit.id}
+                          habit={habit}
+                          onToggle={() => handleToggle(habit.id)}
+                          onDelete={() => handleDelete(habit.id)}
+                        />
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
 
           {/* Summary */}
           <div className="mt-6 pt-6 border-t border-amber-800/30">
