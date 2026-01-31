@@ -57,6 +57,10 @@ export function checkJobRequirements(
 ): RequirementCheckResult[] {
   const results: RequirementCheckResult[] = [];
 
+  if (!user) {
+    return results;
+  }
+
   // レベルチェック
   if (requirements.level !== undefined && user.level != null) {
     const currentLevel = user.level;
@@ -148,6 +152,10 @@ export function isJobUnlockable(
   userJobs: UserJob[],
   userAchievements: UserAchievement[]
 ): boolean {
+  if (!user) {
+    return false;
+  }
+  
   const results = checkJobRequirements(requirements, user, userJobs, userAchievements);
   return results.every((r) => r.isMet);
 }
@@ -161,6 +169,10 @@ export function getJobUnlockProgress(
   userJobs: UserJob[],
   userAchievements: UserAchievement[]
 ): { completed: number; total: number; percentage: number } {
+  if (!user) {
+    return { completed: 0, total: 0, percentage: 0 };
+  }
+  
   const results = checkJobRequirements(requirements, user, userJobs, userAchievements);
   const completed = results.filter((r) => r.isMet).length;
   const total = results.length;
