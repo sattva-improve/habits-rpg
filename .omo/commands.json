@@ -1,0 +1,10 @@
+{
+  "commands": [
+    {
+      "name": "issue-workflow",
+      "description": "GitHub Issue → Branch → PR workflow automation",
+      "script": ".omo/commands/issue-workflow.sh",
+      "category": "workflow"
+    }
+  ]
+}
