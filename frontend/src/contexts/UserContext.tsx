@@ -263,7 +263,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return success;
   };
 
-  // 習慣を完了
+  const optimisticRecordRef = useRef<Map<string, { record: HabitRecord; habit: Habit }>>(new Map());
+
   const completeHabit = async (
     habitId: string,
     date?: string,
@@ -273,29 +274,69 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     const completedDate = date ?? getTodayDate();
     const oldLevel = userData?.level ?? 1;
+    const habit = habits.find(h => h.habitId === habitId);
     
-    const result = await habitService.recordCompletion(
-      habitId,
-      user.userId,
-      completedDate,
-      note
-    );
+    if (!habit) {
+      console.error('Habit not found:', habitId);
+      return null;
+    }
 
-    if (result.record) {
-      // ローカルステートを即座に更新（UIレスポンス向上）
+    const optimisticRecordId = `optimistic-${Date.now()}`;
+    const optimisticRecord: HabitRecord = {
+      recordId: optimisticRecordId,
+      habitId,
+      userId: user.userId,
+      completedDate,
+      completed: true,
+      note,
+      expEarned: 0,
+      streakAtCompletion: habit.currentStreak + 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    setHabitRecords(prev => {
+      const newMap = new Map(prev);
+      const existing = newMap.get(habitId) ?? [];
+      newMap.set(habitId, [...existing, optimisticRecord]);
+      return newMap;
+    });
+
+    const optimisticHabit: Habit = {
+      ...habit,
+      currentStreak: habit.currentStreak + 1,
+      bestStreak: Math.max(habit.bestStreak, habit.currentStreak + 1),
+      totalCompletions: habit.totalCompletions + 1,
+    };
+
+    setHabits(prev => prev.map(h => h.habitId === habitId ? optimisticHabit : h));
+    
+    optimisticRecordRef.current.set(habitId, { record: optimisticRecord, habit });
+
+    try {
+      const result = await habitService.recordCompletion(
+        habitId,
+        user.userId,
+        completedDate,
+        note
+      );
+
+      if (!result.record) {
+        throw new Error('Failed to record completion');
+      }
+
+      optimisticRecordRef.current.delete(habitId);
+
       setHabitRecords(prev => {
         const newMap = new Map(prev);
         const existing = newMap.get(habitId) ?? [];
-        newMap.set(habitId, [...existing, result.record!]);
+        const withoutOptimistic = existing.filter(r => r.recordId !== optimisticRecordId);
+        newMap.set(habitId, [...withoutOptimistic, result.record!]);
         return newMap;
       });
 
-      // 習慣のストリーク更新をローカルで即座に反映
-      // 注: 実際のストリーク値はrecordCompletionで計算されるため、
-      // バックグラウンド更新で正確な値に更新される
       setHabits(prev => prev.map(h => {
         if (h.habitId === habitId) {
-          // ストリーク値はresult.record.streakAtCompletionから取得
           const newStreak = result.record!.streakAtCompletion;
           return {
             ...h,
@@ -306,6 +347,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
         return h;
       }));
+
+      playSoundGlobal('complete');
+      toast.success(`✅ 習慣を完了しました！ +${result.expGained} EXP`, {
+        duration: 3000,
+      });
 
       // ユーザーデータと称号チェックを並列で実行（バックグラウンド更新）
       const updatePromise = (async () => {
@@ -417,9 +463,34 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       // バックグラウンドで更新を待つ（UIはブロックしない）
       updatePromise.catch(err => console.error('Background update failed:', err));
-    }
 
-    return result.record;
+      return result.record;
+    } catch (error) {
+      console.error('Failed to complete habit:', error);
+      
+      optimisticRecordRef.current.delete(habitId);
+
+      setHabitRecords(prev => {
+        const newMap = new Map(prev);
+        const existing = newMap.get(habitId) ?? [];
+        newMap.set(habitId, existing.filter(r => r.recordId !== optimisticRecordId));
+        return newMap;
+      });
+
+      const originalHabit = optimisticRecordRef.current.get(habitId)?.habit ?? habit;
+      setHabits(prev => prev.map(h => h.habitId === habitId ? originalHabit : h));
+      
+      toast.error('❌ 習慣の完了に失敗しました。もう一度お試しください。', {
+        duration: 4000,
+        style: {
+          background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+          border: '2px solid #ef4444',
+          color: '#fca5a5',
+        },
+      });
+
+      return null;
+    }
   };
 
   // 特定の日の記録を取得
