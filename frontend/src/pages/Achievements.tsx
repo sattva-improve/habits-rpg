@@ -115,30 +115,34 @@ export function Achievements() {
     const userJob = userJobs.find(uj => uj.jobId === job.jobId);
     const isUnlocked = userJob?.isUnlocked ?? (job.jobId === 'beginner');
     
-    // 新しいユーティリティ関数で条件チェックと進捗を計算
-    const requirementResults = checkJobRequirements(
-      job.requirements,
-      userData!,
-      userJobs,
-      userAchievements,
-      jobs.map(j => ({ jobId: j.jobId, name: j.name })),
-      achievements.map(a => ({ achievementId: a.achievementId, name: a.name }))
-    );
+    let requirementResults = undefined;
+    let progress = undefined;
     
-    const progress = getJobUnlockProgress(
-      job.requirements,
-      userData!,
-      userJobs,
-      userAchievements
-    );
+    if (userData) {
+      requirementResults = checkJobRequirements(
+        job.requirements,
+        userData,
+        userJobs,
+        userAchievements,
+        jobs.map(j => ({ jobId: j.jobId, name: j.name })),
+        achievements.map(a => ({ achievementId: a.achievementId, name: a.name }))
+      );
+      
+      progress = getJobUnlockProgress(
+        job.requirements,
+        userData,
+        userJobs,
+        userAchievements
+      );
+    }
     
     return {
       id: job.jobId,
       title: job.name,
       description: job.description,
       requirements: job.requirements,
-      requirementResults,  // 詳細な条件チェック結果
-      progress,            // 全体進捗
+      requirementResults,
+      progress,
       isUnlocked,
       isEquipped: userData?.currentJobId === job.jobId,
       iconType: job.icon,
