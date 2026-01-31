@@ -134,6 +134,16 @@ export function Achievements() {
         userJobs,
         userAchievements
       );
+      
+      // デバッグ: 最初の未解放ジョブの情報をログ出力
+      if (!isUnlocked && job.requirements && requirementResults.length === 0) {
+        console.log('Debug - Empty requirements results:', {
+          jobId: job.jobId,
+          requirements: job.requirements,
+          userData: { level: userData.level, STR: userData.strength },
+          requirementResults,
+        });
+      }
     }
     
     return {
