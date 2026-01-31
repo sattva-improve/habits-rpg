@@ -311,6 +311,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
     
     optimisticRecordRef.current.set(habitId, { record: optimisticRecord, habit });
 
+    // 即座にサウンド再生とトースト通知（UX向上）
+    playSoundGlobal('complete');
+    const optimisticStreak = habit.currentStreak + 1;
+    const breakdown = getExpBreakdown(optimisticStreak);
+    const expMessage = breakdown.streakBonus > 0
+      ? `+${breakdown.totalExp} EXP (基本${breakdown.baseExp} + ストリーク${breakdown.streakBonus})`
+      : `+${breakdown.totalExp} EXP`;
+    
+    toast.success(`✅ 習慣を完了しました！ ${expMessage}`, {
+      duration: 3000,
+    });
+
     try {
       const result = await habitService.recordCompletion(
         habitId,
@@ -346,28 +358,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
         return h;
       }));
 
-      playSoundGlobal('complete');
-      
-      const streak = result.record!.streakAtCompletion;
-      const breakdown = getExpBreakdown(streak);
-      const expMessage = breakdown.streakBonus > 0
-        ? `+${breakdown.totalExp} EXP (基本${breakdown.baseExp} + ストリーク${breakdown.streakBonus})`
-        : `+${breakdown.totalExp} EXP`;
-      
-      toast.success(`✅ 習慣を完了しました！ ${expMessage}`, {
-        duration: 3000,
-      });
-
-      // ユーザーデータと称号チェックを並列で実行（バックグラウンド更新）
+      // バックグラウンドでユーザーデータ更新（UI更新済みなのでhabitsの再取得は不要）
       const updatePromise = (async () => {
-        const [updatedUser, updatedHabits] = await Promise.all([
-          userService.getUser(user.userId),
-          habitService.getHabits(user.userId),
-        ]);
+        const updatedUser = await userService.getUser(user.userId);
         
         if (updatedUser) {
           setUserData(updatedUser);
-          setHabits(updatedHabits.filter(h => !h.isArchived && h.isActive));
           
           // レベルアップ通知
           if (updatedUser.level > oldLevel) {
@@ -390,7 +386,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           if (achievements.length > 0) {
             const checkResult = await achievementService.checkAchievements(
               latestUser,
-              updatedHabits,
+              habits,
               achievements,
               latestUserAchievements
             );
