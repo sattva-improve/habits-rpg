@@ -57,7 +57,7 @@ export function checkJobRequirements(
 ): RequirementCheckResult[] {
   const results: RequirementCheckResult[] = [];
 
-  if (!user) {
+  if (!user || !requirements) {
     return results;
   }
 
@@ -152,7 +152,7 @@ export function isJobUnlockable(
   userJobs: UserJob[],
   userAchievements: UserAchievement[]
 ): boolean {
-  if (!user) {
+  if (!user || !requirements) {
     return false;
   }
   
@@ -169,7 +169,7 @@ export function getJobUnlockProgress(
   userJobs: UserJob[],
   userAchievements: UserAchievement[]
 ): { completed: number; total: number; percentage: number } {
-  if (!user) {
+  if (!user || !requirements) {
     return { completed: 0, total: 0, percentage: 0 };
   }
   
