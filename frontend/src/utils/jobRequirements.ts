@@ -40,7 +40,8 @@ function getUserStatValue(user: User, stat: StatType): number {
     CHA: 'charisma',
     STR: 'strength',
   };
-  return user[statMap[stat]] as number;
+  const value = user[statMap[stat]];
+  return typeof value === 'number' ? value : 0;
 }
 
 /**
@@ -57,7 +58,7 @@ export function checkJobRequirements(
   const results: RequirementCheckResult[] = [];
 
   // レベルチェック
-  if (requirements.level !== undefined) {
+  if (requirements.level !== undefined && user.level != null) {
     const currentLevel = user.level;
     const requiredLevel = requirements.level;
     const isMet = currentLevel >= requiredLevel;
