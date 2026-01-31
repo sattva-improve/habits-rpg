@@ -2,6 +2,7 @@ import { Check, Flame, Loader2, Trash2, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants';
+import { getExpBreakdown } from '@/services/habit';
 
 interface HabitDisplayData {
   id: string;
@@ -27,6 +28,11 @@ export function HabitCard({ habit, onToggle, onDelete }: HabitCardProps) {
   const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  const breakdown = getExpBreakdown(habit.streak);
+  const expDisplay = breakdown.streakBonus > 0
+    ? `+${breakdown.totalExp} EXP (基本${breakdown.baseExp} + ストリーク${breakdown.streakBonus})`
+    : `+${breakdown.totalExp} EXP`;
   
   const statusColors = {
     'みたっせい': 'bg-red-900/40 text-red-300 border-red-700/50',
@@ -130,7 +136,7 @@ export function HabitCard({ habit, onToggle, onDelete }: HabitCardProps) {
         <div className="flex items-center gap-2">
           <span className="text-xs text-amber-300/70">{habit.category}</span>
           <span className="text-xs font-bold text-yellow-400">
-            +{habit.expReward} EXP
+            {expDisplay}
           </span>
           {habit.isLoading && (
             <span className="text-xs text-amber-400 animate-pulse">処理中...</span>

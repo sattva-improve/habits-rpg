@@ -6,7 +6,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { userService } from '../services/user';
-import { habitService } from '../services/habit';
+import { habitService, getExpBreakdown } from '../services/habit';
 import { achievementService } from '../services/achievement';
 import { seedService } from '../services/seed';
 import { toast } from 'sonner';
@@ -349,7 +349,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }));
 
       playSoundGlobal('complete');
-      toast.success(`✅ 習慣を完了しました！ +${result.expGained} EXP`, {
+      
+      const streak = result.record!.streakAtCompletion;
+      const breakdown = getExpBreakdown(streak);
+      const expMessage = breakdown.streakBonus > 0
+        ? `+${breakdown.totalExp} EXP (基本${breakdown.baseExp} + ストリーク${breakdown.streakBonus})`
+        : `+${breakdown.totalExp} EXP`;
+      
+      toast.success(`✅ 習慣を完了しました！ ${expMessage}`, {
         duration: 3000,
       });
 

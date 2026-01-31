@@ -63,6 +63,25 @@ function getStreakMultiplier(streak: number): number {
 }
 
 /**
+ * EXP獲得の内訳を取得（表示用）
+ */
+export function getExpBreakdown(streak: number): {
+  baseExp: number;
+  streakBonus: number;
+  totalExp: number;
+} {
+  const baseExp = 15;
+  const totalExp = calculateExp(streak);
+  const streakBonus = totalExp - baseExp;
+  
+  return {
+    baseExp,
+    streakBonus,
+    totalExp,
+  };
+}
+
+/**
  * 獲得経験値を計算（難易度は固定：normal相当）
  */
 function calculateExp(streak: number): number {
