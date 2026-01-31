@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trophy, Crown, Lock, Check, Loader2, Sword, User } from 'lucide-react';
+import { Trophy, Crown, Lock, Check, Loader2, Sword, User, X } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
 import type { Gender } from '@/types';
@@ -9,6 +9,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ImageWithFallback } from '@/components/common';
+import { checkJobRequirements, getJobUnlockProgress } from '@/utils/jobRequirements';
 
 export function Achievements() {
   const { 
@@ -109,73 +110,36 @@ export function Achievements() {
     };
   });
 
-  // ユーザーのジョブ状態をマージ
+  // ユーザーのジョブ状態をマージ（新しいユーティリティ関数を使用）
   const mergedJobs = jobs.map(job => {
     const userJob = userJobs.find(uj => uj.jobId === job.jobId);
+    const isUnlocked = userJob?.isUnlocked ?? (job.jobId === 'beginner');
     
-    // 要件のJSON形式を解析して日本語化
-    // requirementsがJSON文字列の場合はパースする
-    let reqs: Record<string, unknown> = {};
-    if (job.requirements) {
-      if (typeof job.requirements === 'string') {
-        try {
-          reqs = JSON.parse(job.requirements);
-        } catch {
-          console.error(`Failed to parse job requirements for ${job.jobId}`);
-        }
-      } else {
-        reqs = job.requirements as Record<string, unknown>;
-      }
-    }
-
-    let unlockCondition = 'じょうけんをみたすとかいほう';
-    const conditions: string[] = [];
+    // 新しいユーティリティ関数で条件チェックと進捗を計算
+    const requirementResults = checkJobRequirements(
+      job.requirements,
+      userData!,
+      userJobs,
+      userAchievements,
+      jobs.map(j => ({ jobId: j.jobId, name: j.name })),
+      achievements.map(a => ({ achievementId: a.achievementId, name: a.name }))
+    );
     
-    if (reqs.level) {
-      conditions.push(`Lv.${reqs.level}`);
-    }
-    
-    if (reqs.stats) {
-      const statNames: Record<string, string> = {
-        VIT: 'たいりょく',
-        INT: 'かしこさ',
-        MND: 'せいしん',
-        DEX: 'きようさ',
-        CHA: 'みりょく',
-        STR: 'ちから',
-      };
-      const statReqs = reqs.stats as Record<string, number>;
-      for (const [stat, value] of Object.entries(statReqs)) {
-        conditions.push(`${statNames[stat] ?? stat} ${value}`);
-      }
-    }
-    
-    // 前提ジョブ要件を追加
-    if (reqs.jobs && Array.isArray(reqs.jobs)) {
-      const jobNames = (reqs.jobs as string[]).map(jobId => {
-        const prerequisiteJob = jobs.find(j => j.jobId === jobId);
-        return prerequisiteJob ? prerequisiteJob.name : jobId;
-      });
-      conditions.push(`しょくぎょう: ${jobNames.join(', ')}`);
-    }
-    
-    // アチーブメント要件を追加
-    if (reqs.achievements && Array.isArray(reqs.achievements)) {
-      const achievementNames = (reqs.achievements as string[]).map(achId => {
-        const prerequisiteAch = achievements.find(a => a.achievementId === achId);
-        return prerequisiteAch ? prerequisiteAch.name : achId;
-      });
-      conditions.push(`しょうごう: ${achievementNames.join(', ')}`);
-    }
-    
-    unlockCondition = conditions.length > 0 ? conditions.join(', ') : unlockCondition;
+    const progress = getJobUnlockProgress(
+      job.requirements,
+      userData!,
+      userJobs,
+      userAchievements
+    );
     
     return {
       id: job.jobId,
       title: job.name,
       description: job.description,
-      unlockCondition,
-      isUnlocked: userJob?.isUnlocked ?? (job.jobId === 'beginner'),
+      requirements: job.requirements,
+      requirementResults,  // 詳細な条件チェック結果
+      progress,            // 全体進捗
+      isUnlocked,
       isEquipped: userData?.currentJobId === job.jobId,
       iconType: job.icon,
       tier: job.tier,
@@ -374,6 +338,15 @@ export function Achievements() {
                           )}
                         </div>
 
+                        {/* Progress Badge (for locked jobs) */}
+                        {!job.isUnlocked && job.progress && (
+                          <div className="absolute top-1 left-1 bg-slate-900/90 border border-purple-600/50 rounded px-1.5 py-0.5">
+                            <span className="text-[10px] text-purple-400">
+                              {job.progress.percentage}%
+                            </span>
+                          </div>
+                        )}
+
                         {/* Unlocked/Equipped Badge */}
                         {job.isUnlocked && (
                           <div className={`absolute -top-1 -right-1 ${job.isEquipped ? 'bg-yellow-600 border-yellow-400' : 'bg-green-600 border-green-400'} border rounded-full p-0.5`}>
@@ -399,8 +372,8 @@ export function Achievements() {
                       </div>
                     </div>
                   </PopoverTrigger>
-                  <PopoverContent className="w-64 bg-slate-900 border border-purple-600/50 p-3">
-                    <div className="space-y-2">
+                  <PopoverContent className="w-80 bg-slate-900 border border-purple-600/50 p-4">
+                    <div className="space-y-3">
                       <div className="flex items-center gap-2">
                         <h4 className="font-bold text-purple-200">{job.title}</h4>
                         {job.isEquipped && (
@@ -409,30 +382,74 @@ export function Achievements() {
                           </span>
                         )}
                       </div>
+                      
                       <p className="text-sm text-purple-300/80">{job.description}</p>
-                      <div className="space-y-2">
-                        <span className="text-xs text-purple-400 bg-purple-950/40 px-2 py-1 rounded border border-purple-700/50 inline-block">
-                          {job.unlockCondition}
-                        </span>
-                        {/* 職業選択ボタン */}
-                        {job.isUnlocked && !job.isEquipped && (
-                          <button
-                            onClick={() => handleSelectJob(job.id, job.title)}
-                            disabled={isSelectingJob !== null}
-                            className="w-full flex items-center justify-center gap-1 text-xs font-semibold px-3 py-2 rounded border bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {isSelectingJob === job.id ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <Sword className="w-3 h-3" />
-                            )}
-                            <span>そうびする</span>
-                          </button>
-                        )}
-                        {!job.isUnlocked && (
-                          <p className="text-xs text-slate-400">※ まだ解放されていません</p>
-                        )}
-                      </div>
+                      
+                      {!job.isUnlocked && job.requirementResults && job.requirementResults.length > 0 && (
+                        <div className="space-y-2 border-t border-purple-800/30 pt-3">
+                          <div className="text-xs text-purple-400 font-semibold">解放条件:</div>
+                          
+                          {job.requirementResults.map((req, idx) => (
+                            <div key={idx} className="space-y-1">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className={req.isMet ? 'text-green-400' : 'text-slate-400'}>
+                                  {req.label}: {req.current} / {req.required}
+                                </span>
+                                {req.isMet ? (
+                                  <Check className="w-4 h-4 text-green-400" />
+                                ) : (
+                                  <X className="w-4 h-4 text-red-400" />
+                                )}
+                              </div>
+                              <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all ${
+                                    req.isMet 
+                                      ? 'bg-gradient-to-r from-green-600 to-green-400' 
+                                      : 'bg-gradient-to-r from-purple-600 to-purple-400'
+                                  }`}
+                                  style={{ width: `${Math.min(req.percentage, 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {job.progress && (
+                            <div className="border-t border-purple-800/30 pt-3">
+                              <div className="text-xs text-purple-400 mb-2">
+                                達成: {job.progress.completed} / {job.progress.total} ({job.progress.percentage}%)
+                              </div>
+                              <div className="w-full bg-slate-800 rounded-full h-2">
+                                <div
+                                  className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full transition-all"
+                                  style={{ width: `${job.progress.percentage}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {job.isUnlocked && !job.isEquipped && (
+                        <button
+                          onClick={() => handleSelectJob(job.id, job.title)}
+                          disabled={isSelectingJob !== null}
+                          className="w-full flex items-center justify-center gap-1 text-xs font-semibold px-3 py-2 rounded border bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isSelectingJob === job.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Sword className="w-3 h-3" />
+                          )}
+                          <span>そうびする</span>
+                        </button>
+                      )}
+                      
+                      {!job.isUnlocked && (
+                        <p className="text-xs text-slate-400 text-center pt-2">
+                          ※ まだ解放されていません
+                        </p>
+                      )}
                     </div>
                   </PopoverContent>
                 </Popover>
