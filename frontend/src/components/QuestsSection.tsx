@@ -63,9 +63,9 @@ export function QuestsSection() {
   // 習慣のステータスを取得
   const getHabitStatus = (habit: Habit): string => {
     if (isHabitCompletedToday(habit.habitId)) {
-      return 'たっせい！';
+      return '';
     }
-    return 'みたっせい';
+    return '';
   };
 
   // アイコンを取得
@@ -229,7 +229,7 @@ export function QuestsSection() {
           <div className="mt-6 pt-6 border-t border-amber-800/30">
             <div className="flex items-center justify-between text-sm">
               <span className="text-amber-200">
-                たっせい: {completedCount} / {displayHabits.length}
+                {completedCount} / {displayHabits.length}
               </span>
               <span className="font-bold text-amber-400">
                 のこりけいけんち: {totalExpAvailable}
