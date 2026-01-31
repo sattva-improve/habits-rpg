@@ -34,13 +34,7 @@ export function HabitCard({ habit, onToggle, onDelete }: HabitCardProps) {
     ? `+${breakdown.totalExp} EXP (基本${breakdown.baseExp} + ストリーク${breakdown.streakBonus})`
     : `+${breakdown.totalExp} EXP`;
   
-  const statusColors = {
-    'みたっせい': 'bg-red-900/40 text-red-300 border-red-700/50',
-    'しんこうちゅう': 'bg-blue-900/40 text-blue-300 border-blue-700/50',
-    'たっせい！': 'bg-green-900/40 text-green-300 border-green-700/50',
-  };
-
-  const statusColor = statusColors[habit.status as keyof typeof statusColors] || 'bg-slate-900/40 text-slate-300 border-slate-700/50';
+  const statusColor = 'bg-slate-900/40 text-slate-300 border-slate-700/50';
 
   const handleDelete = async () => {
     if (!onDelete) return;
@@ -142,11 +136,6 @@ export function HabitCard({ habit, onToggle, onDelete }: HabitCardProps) {
             <span className="text-xs text-amber-400 animate-pulse">処理中...</span>
           )}
         </div>
-      </div>
-
-      {/* Right: Status Badge */}
-      <div className={`flex-shrink-0 px-3 py-1 rounded border text-xs font-medium ${statusColor}`}>
-        {habit.completed ? 'たっせい！' : habit.isLoading ? 'しょりちゅう...' : habit.status}
       </div>
 
       {/* Edit Button */}
