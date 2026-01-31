@@ -20,6 +20,7 @@ export type {
   UserAchievement,
   Job,
   UserJob,
+  JobRequirements,
   ApiResponse,
   PaginatedResponse,
 } from '../../../shared/types';
