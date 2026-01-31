@@ -291,8 +291,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       note,
       expEarned: 0,
       streakAtCompletion: habit.currentStreak + 1,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
 
     setHabitRecords(prev => {
