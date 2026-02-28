@@ -6,15 +6,15 @@
 
 | Task | Command |
 |------|---------|
-| Install deps | `make install` (or `npm install && cd frontend && pnpm install`) |
+| Install deps | `make install` (or `npm install && cd frontend && npm install`) |
 | Start dev | `make sandbox` (terminal 1) + `make dev` (terminal 2) |
 | Build | `make build` (frontend only) |
-| Type check | `make typecheck` |
+| Type check | `make typecheck` (frontend) |
 | Deploy | `make deploy` |
 | Run tests | `npx ts-node tests/integration/api-test.ts` |
 | Seed data | Open browser console → `window.seedService.reseedAll()` |
 
-**Tech Stack:** React 18 + TypeScript, Vite, Tailwind CSS, shadcn/ui, AWS Amplify Gen2, DynamoDB
+**Tech Stack:** React 18 + TypeScript, Vite, Tailwind CSS, shadcn/ui, AWS Amplify Gen2, DynamoDB (Supabase client foundation in frontend)
 
 ---
 
