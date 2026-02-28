@@ -121,7 +121,7 @@ await userService.updateUser(userId, { displayName: 'New Name' });
 
 ```bash
 # 型チェック
-npm run typecheck
+npx tsc --noEmit
 
 # ビルド
 npm run build

@@ -11,6 +11,7 @@ Habits-RPGプロジェクトのドキュメント一覧です。
 | [../README.md](../README.md) | プロジェクト概要・セットアップ |
 | [DEPLOY.md](DEPLOY.md) | CI/CDデプロイ設定・GitHub Actions |
 | [SECRETS.md](SECRETS.md) | シークレット管理・API Key |
+| [MIGRATION_SUPABASE.md](MIGRATION_SUPABASE.md) | Amplify→Supabase 移行メモ |
 
 ### アセット作成
 

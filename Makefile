@@ -1,7 +1,7 @@
 # Habits RPG Makefile
 # 頻繁に使用するコマンドをまとめたMakefile
 
-.PHONY: help install dev sandbox deploy lint format clean seed logs
+.PHONY: help install install-backend install-frontend dev sandbox sandbox-bg sandbox-delete deploy typecheck build seed db-tables logs aws-check clean supabase-start supabase-stop supabase-reset
 
 # デフォルトターゲット
 .DEFAULT_GOAL := help
@@ -25,14 +25,16 @@ help:
 	@echo "  make dev            - フロントエンド開発サーバーを起動"
 	@echo "  make sandbox        - バックエンドSandboxを起動"
 	@echo "  make sandbox-delete - Sandboxを削除"
+	@echo "  make supabase-start  - (任意) Supabaseローカル環境を起動"
+	@echo "  make supabase-stop   - (任意) Supabaseローカル環境を停止"
+	@echo "  make supabase-reset  - (任意) SupabaseローカルDBをリセット"
 	@echo ""
 	@echo "$(GREEN)デプロイ:$(RESET)"
 	@echo "  make deploy         - 本番環境にデプロイ"
 	@echo ""
 	@echo "$(GREEN)コード品質:$(RESET)"
-	@echo "  make lint           - Lintを実行"
-	@echo "  make format         - コードをフォーマット"
-	@echo "  make typecheck      - TypeScript型チェック"
+	@echo "  make typecheck      - TypeScript型チェック (frontend)"
+	@echo "  make build          - フロントエンドをビルド"
 	@echo ""
 	@echo "$(GREEN)データ管理:$(RESET)"
 	@echo "  make seed           - シードデータ投入の案内を表示"
@@ -55,13 +57,13 @@ install-backend:
 ## install-frontend: フロントエンド依存関係をインストール
 install-frontend:
 	@echo "$(CYAN)フロントエンド依存関係をインストール中...$(RESET)"
-	cd frontend && pnpm install
+	cd frontend && npm install
 
 ## dev: フロントエンド開発サーバーを起動
 dev:
 	@echo "$(CYAN)フロントエンド開発サーバーを起動します...$(RESET)"
-	@echo "$(YELLOW)URL: http://localhost:3001$(RESET)"
-	cd frontend && pnpm run dev
+	@echo "$(YELLOW)URL: http://localhost:3000$(RESET)"
+	cd frontend && npm run dev
 
 ## sandbox: バックエンドSandboxを起動
 sandbox:
@@ -86,27 +88,17 @@ deploy:
 	@echo "$(CYAN)本番環境にデプロイします...$(RESET)"
 	npx ampx pipeline-deploy --branch main
 
-## lint: Lintを実行
-lint:
-	@echo "$(CYAN)Lintを実行中...$(RESET)"
-	cd frontend && pnpm run lint
-
-## format: コードをフォーマット
-format:
-	@echo "$(CYAN)コードをフォーマット中...$(RESET)"
-	cd frontend && pnpm run format 2>/dev/null || npx prettier --write "src/**/*.{ts,tsx}"
-
-## typecheck: TypeScript型チェック
+## typecheck: TypeScript型チェック (frontend)
 typecheck:
 	@echo "$(CYAN)TypeScript型チェックを実行中...$(RESET)"
-	cd frontend && pnpm run typecheck 2>/dev/null || npx tsc --noEmit
+	cd frontend && npx tsc --noEmit
 
 ## seed: シードデータ投入の案内を表示
 seed:
 	@echo "$(CYAN)シードデータを投入するには:$(RESET)"
 	@echo ""
 	@echo "1. フロントエンド開発サーバーを起動: make dev"
-	@echo "2. ブラウザでアプリを開く: http://localhost:3001"
+	@echo "2. ブラウザでアプリを開く: http://localhost:3000"
 	@echo "3. ブラウザの開発者コンソールで以下を実行:"
 	@echo ""
 	@echo "   $(GREEN)window.seedService.reseedAll()$(RESET)"
@@ -144,10 +136,25 @@ aws-check:
 ## build: フロントエンドをビルド
 build:
 	@echo "$(CYAN)フロントエンドをビルド中...$(RESET)"
-	cd frontend && pnpm run build
+	cd frontend && npm run build
 
 ## start-all: SandboxとフロントエンドをBG起動
 start-all: sandbox-bg
 	@sleep 5
 	@echo "$(CYAN)フロントエンドを起動します...$(RESET)"
-	cd frontend && pnpm run dev
+	cd frontend && npm run dev
+
+## supabase-start: (任意) Supabaseローカル環境を起動
+supabase-start:
+	@command -v supabase >/dev/null 2>&1 || { echo "$(YELLOW)Supabase CLI が見つかりません。https://supabase.com/docs/guides/cli/getting-started を参照してインストールしてください。$(RESET)"; exit 1; }
+	supabase start
+
+## supabase-stop: (任意) Supabaseローカル環境を停止
+supabase-stop:
+	@command -v supabase >/dev/null 2>&1 || { echo "$(YELLOW)Supabase CLI が見つかりません。$(RESET)"; exit 1; }
+	supabase stop
+
+## supabase-reset: (任意) SupabaseローカルDBをリセット
+supabase-reset:
+	@command -v supabase >/dev/null 2>&1 || { echo "$(YELLOW)Supabase CLI が見つかりません。$(RESET)"; exit 1; }
+	supabase db reset

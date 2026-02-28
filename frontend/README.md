@@ -24,11 +24,13 @@ npm run dev
 ## 開発コマンド
 
 ```bash
-npm run dev       # 開発サーバー起動 (localhost:3001)
+npm run dev       # 開発サーバー起動 (localhost:3000)
 npm run build     # 本番ビルド
 npm run preview   # ビルドプレビュー
 npm run lint      # Lint実行
 ```
+
+※ 開発サーバーのデフォルトは http://localhost:3000 です。
 
 ## ドキュメント
 
