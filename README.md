@@ -20,7 +20,7 @@
 \`\`\`
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Frontend (React)                         │
-│                     localhost:3001 / Hosting                    │
+│                     localhost:3000 / Hosting                    │
 ├─────────────────────────────────────────────────────────────────┤
 │                       AWS Amplify Gen2                          │
 ├──────────────┬──────────────┬──────────────────────────────────┤
@@ -74,7 +74,7 @@ cd Habits-rpg
 npm install
 
 # フロントエンド依存関係
-cd frontend && pnpm install
+cd frontend && npm install
 \`\`\`
 
 ### 開発サーバー起動
@@ -177,9 +177,11 @@ make help
 make dev          # フロントエンド開発サーバー
 make sandbox      # バックエンド Sandbox
 make deploy       # 本番デプロイ
-make lint         # Lint実行
-make format       # フォーマット
+make typecheck    # TypeScript型チェック (frontend)
+make build        # フロントエンドビルド
 make seed         # シードデータ投入 (コンソール)
+
+※ フロントエンドは `frontend/` 配下で `npm` を使用します（CI も `npm ci`）。
 \`\`\`
 
 ## 🔐 セキュリティ
